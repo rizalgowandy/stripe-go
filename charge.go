@@ -252,7 +252,9 @@ type ChargePaymentMethodDetailsAcssDebit struct {
 }
 
 // ChargePaymentMethodDetailsAfterpayClearpay represents details about the AfterpayClearpay PaymentMethod.
-type ChargePaymentMethodDetailsAfterpayClearpay struct{}
+type ChargePaymentMethodDetailsAfterpayClearpay struct {
+	Reference string `json:"reference"`
+}
 
 // ChargePaymentMethodDetailsAlipay represents details about the Alipay PaymentMethod.
 type ChargePaymentMethodDetailsAlipay struct {
@@ -286,6 +288,11 @@ type ChargePaymentMethodDetailsBancontact struct {
 	VerifiedName              string         `json:"verified_name"`
 	GeneratedSepaDebit        *PaymentMethod `json:"generated_sepa_debit"`
 	GeneratedSepaDebitMandate *Mandate       `json:"generated_sepa_debit_mandate"`
+}
+
+// ChargePaymentMethodDetailsBoleto represents details about the Boleto PaymentMethod.
+type ChargePaymentMethodDetailsBoleto struct {
+	TaxID string `json:"tax_id"`
 }
 
 // ChargePaymentMethodDetailsCardChecks represents the checks associated with the charge's Card
@@ -544,6 +551,12 @@ type ChargePaymentMethodDetailsStripeAccount struct {
 type ChargePaymentMethodDetailsWechat struct {
 }
 
+// ChargePaymentMethodDetailsWechatPay represents details about the WechatPay PaymentMethod.
+type ChargePaymentMethodDetailsWechatPay struct {
+	Fingerprint   string `json:"fingerprint"`
+	TransactionID string `json:"transaction_id"`
+}
+
 // ChargePaymentMethodDetails represents the details about the PaymentMethod associated with the
 // charge.
 type ChargePaymentMethodDetails struct {
@@ -555,6 +568,7 @@ type ChargePaymentMethodDetails struct {
 	AUBECSDebit       *ChargePaymentMethodDetailsAUBECSDebit       `json:"au_becs_debit"`
 	BACSDebit         *ChargePaymentMethodDetailsBACSDebit         `json:"bacs_debit"`
 	Bancontact        *ChargePaymentMethodDetailsBancontact        `json:"bancontact"`
+	Boleto            *ChargePaymentMethodDetailsBoleto            `json:"boleto"`
 	Card              *ChargePaymentMethodDetailsCard              `json:"card"`
 	CardPresent       *ChargePaymentMethodDetailsCardPresent       `json:"card_present"`
 	Eps               *ChargePaymentMethodDetailsEps               `json:"eps"`
@@ -571,6 +585,7 @@ type ChargePaymentMethodDetails struct {
 	StripeAccount     *ChargePaymentMethodDetailsStripeAccount     `json:"stripe_account"`
 	Type              ChargePaymentMethodDetailsType               `json:"type"`
 	Wechat            *ChargePaymentMethodDetailsWechat            `json:"wechat"`
+	WechatPay         *ChargePaymentMethodDetailsWechatPay         `json:"wechat_pay"`
 }
 
 // ChargeTransferData represents the information for the transfer_data associated with a charge.
@@ -691,8 +706,6 @@ type ShippingDetails struct {
 	Phone          string   `json:"phone"`
 	TrackingNumber string   `json:"tracking_number"`
 }
-
-var depth = -1
 
 // UnmarshalJSON handles deserialization of a ChargeOutcomeRule.
 // This custom unmarshaling is needed because the resulting

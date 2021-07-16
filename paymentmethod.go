@@ -22,6 +22,7 @@ const (
 	PaymentMethodTypeAUBECSDebit      PaymentMethodType = "au_becs_debit"
 	PaymentMethodTypeBACSDebit        PaymentMethodType = "bacs_debit"
 	PaymentMethodTypeBancontact       PaymentMethodType = "bancontact"
+	PaymentMethodTypeBoleto           PaymentMethodType = "boleto"
 	PaymentMethodTypeCard             PaymentMethodType = "card"
 	PaymentMethodTypeCardPresent      PaymentMethodType = "card_present"
 	PaymentMethodTypeEPS              PaymentMethodType = "eps"
@@ -34,6 +35,7 @@ const (
 	PaymentMethodTypeP24              PaymentMethodType = "p24"
 	PaymentMethodTypeSepaDebit        PaymentMethodType = "sepa_debit"
 	PaymentMethodTypeSofort           PaymentMethodType = "sofort"
+	PaymentMethodTypeWechatPay        PaymentMethodType = "wechat_pay"
 )
 
 // PaymentMethodCardBrand is the list of allowed values for the brand property on a
@@ -126,6 +128,12 @@ type PaymentMethodBACSDebitParams struct {
 type PaymentMethodBancontactParams struct {
 }
 
+// PaymentMethodBoletoParams is the set of parameters allowed for the `boleto` hash when creating a
+// PaymentMethod of type Boleto
+type PaymentMethodBoletoParams struct {
+	TaxID *string `form:"tax_id"`
+}
+
 // PaymentMethodCardParams is the set of parameters allowed for the `card` hash when creating a
 // PaymentMethod of type card.
 type PaymentMethodCardParams struct {
@@ -194,6 +202,10 @@ type PaymentMethodSofortParams struct {
 	Country *string `form:"country"`
 }
 
+// PaymentMethodWechatPayParams is the set of parameters allowed for the `wechat_pay` hash when
+// creating a PaymentMethod of type wechat_pay.
+type PaymentMethodWechatPayParams struct{}
+
 // PaymentMethodParams is the set of parameters that can be used when creating or updating a
 // PaymentMethod.
 type PaymentMethodParams struct {
@@ -204,6 +216,7 @@ type PaymentMethodParams struct {
 	AUBECSDebit      *PaymentMethodAUBECSDebitParams      `form:"au_becs_debit"`
 	BACSDebit        *PaymentMethodBACSDebitParams        `form:"bacs_debit"`
 	Bancontact       *PaymentMethodBancontactParams       `form:"bancontact"`
+	Boleto           *PaymentMethodBoletoParams           `form:"boleto"`
 	BillingDetails   *BillingDetailsParams                `form:"billing_details"`
 	Card             *PaymentMethodCardParams             `form:"card"`
 	EPS              *PaymentMethodEPSParams              `form:"eps"`
@@ -216,6 +229,7 @@ type PaymentMethodParams struct {
 	P24              *PaymentMethodP24Params              `form:"p24"`
 	SepaDebit        *PaymentMethodSepaDebitParams        `form:"sepa_debit"`
 	Sofort           *PaymentMethodSofortParams           `form:"sofort"`
+	WechatPay        *PaymentMethodWechatPayParams        `form:"wechat_pay"`
 	Type             *string                              `form:"type"`
 
 	// The following parameters are used when cloning a PaymentMethod to the connected account
@@ -284,6 +298,11 @@ type PaymentMethodBACSDebit struct {
 
 // PaymentMethodBancontact represents the Bancontact properties.
 type PaymentMethodBancontact struct {
+}
+
+// PaymentMethodBoleto represents the Boleto properties.
+type PaymentMethodBoleto struct {
+	TaxID string `json:"tax_id"`
 }
 
 // PaymentMethodCardChecks represents the checks associated with a Card PaymentMethod.
@@ -397,6 +416,10 @@ type PaymentMethodSofort struct {
 	Country string `json:"country"`
 }
 
+// PaymentMethodWechatPay represents the WeChatPay-specific properties.
+type PaymentMethodWechatPay struct {
+}
+
 // PaymentMethod is the resource representing a PaymentMethod.
 type PaymentMethod struct {
 	APIResource
@@ -407,6 +430,7 @@ type PaymentMethod struct {
 	BACSDebit        *PaymentMethodBACSDebit        `json:"bacs_debit"`
 	Bancontact       *PaymentMethodBancontact       `json:"bancontact"`
 	BillingDetails   *BillingDetails                `json:"billing_details"`
+	Boleto           *PaymentMethodBoleto           `json:"boleto"`
 	Card             *PaymentMethodCard             `json:"card"`
 	CardPresent      *PaymentMethodCardPresent      `json:"card_present"`
 	Created          int64                          `json:"created"`
@@ -426,6 +450,7 @@ type PaymentMethod struct {
 	SepaDebit        *PaymentMethodSepaDebit        `json:"sepa_debit"`
 	Sofort           *PaymentMethodSofort           `json:"sofort"`
 	Type             PaymentMethodType              `json:"type"`
+	WechatPay        *PaymentMethodWechatPay        `json:"wechat_pay"`
 }
 
 // PaymentMethodList is a list of PaymentMethods as retrieved from a list endpoint.

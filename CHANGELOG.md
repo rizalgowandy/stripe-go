@@ -1,5 +1,96 @@
 # Changelog
 
+## 72.57.0 - 2021-07-14
+* [#1314](https://github.com/stripe/stripe-go/pull/1314) API Updates
+  * Add support for `ListComputedUpfrontLineItems` method on resource `Quote`
+* [#1312](https://github.com/stripe/stripe-go/pull/1312) codegen: 14 more files
+    * Add support for `BillingAddressCollection` to `CheckoutSession`
+    * Add support for `NetworkReasonCode` to `DisputeReason`
+    * Add support for `Object` to `EphemeralKey`, `ApplicationFee`, and `DisputeReason`
+    * Add support for `Description` to `Refund`
+    * Add const definition for value `blocked` on enum `IssuingCardholderStatus`
+    * Bugfix: add support for `Rate` on `CheckoutSessionTotalDetailsBreakdownTax` -- the existing field `TaxRate` has the wrong json annotation and should be deprecated.
+
+## 72.56.0 - 2021-07-09
+* [#1310](https://github.com/stripe/stripe-go/pull/1310) [#1283](https://github.com/stripe/stripe-go/pull/1283) API Updates
+  * Add support for new resource `Quote`
+  * Add support for `Quote` on `Invoice`
+  * Add support for new value `quote_accept` on enum `InvoiceBillingReason`
+* [#1309](https://github.com/stripe/stripe-go/pull/1309) Fix deserialization of Error on Sigma ScheduledQueryRun (warning: this might be a minor breaking change if you attempted to reference this broken field)
+
+## 72.55.0 - 2021-06-30
+* [#1306](https://github.com/stripe/stripe-go/pull/1306) API Updates
+  * Add support for `boleto` on `InvoicePaymentSettingsPaymentMethodType`.
+
+## 72.54.0 - 2021-06-30
+* [#1304](https://github.com/stripe/stripe-go/pull/1304) Add support for Wechat Pay
+  * Add support for `WechatPay` on `ChargePaymentMethodDetails`, `CheckoutSessionPaymentMethodOptionsParams`, `PaymentIntentPaymentMethodDataParams`, `PaymentIntentPaymentMethodOptionsParams`, `PaymentIntentPaymentMethodOptions`, `PaymentMethodParams`, and `PaymentMethod`
+  * Add support for new value `wechat_pay` on enums `InvoicePaymentSettingsPaymentMethodType` and `PaymentMethodType`
+  * Add support for `WechatPayDisplayQRCode`, `WechatPayRedirectToAndroidApp`, and `WechatPayRedirectToIOSApp` on `PaymentIntentNextAction`
+
+## 72.53.0 - 2021-06-29
+* [#1303](https://github.com/stripe/stripe-go/pull/1303) API Updates
+  * Add support for `Boleto` and `OXXO` on `CheckoutSessionPaymentMethodOptionsParams` and `CheckoutSessionPaymentMethodOptions`
+  * Add support for `BoletoPayments` on `AccountCapabilities`
+
+## 72.52.0 - 2021-06-25
+* [#1301](https://github.com/stripe/stripe-go/pull/1301) API Updates
+  * Add support for `boleto` as a `PaymentMethodType`
+  * Add support for `Boleto` on `ChargePaymentMethodDetails`, `PaymentMethod`, `PaymentMethodParams`, `PaymentIntentPaymentMethodOptions`, `PaymentIntentPaymentMethodDataParams`, and `PaymentIntentPaymentMethodOptionsParams`
+  * Add support for `BoletoDisplayDetails` on `PaymentIntentNextAction`
+  * Add support for `il_vat` on enums `CheckoutSessionCustomerDetailsTaxIDsType` and `TaxIDType`
+* [#1299](https://github.com/stripe/stripe-go/pull/1299) API Updates
+  * Add support for new TaxId types: `ca_pst_mb`, `ca_pst_bc`, `ca_gst_hst`, and `ca_pst_sk`.
+
+## 72.51.0 - 2021-06-16
+* [#1298](https://github.com/stripe/stripe-go/pull/1298) API Updates
+  * Add checkout.Session.URL
+
+## 72.50.0 - 2021-06-07
+* [#1295](https://github.com/stripe/stripe-go/pull/1295) Add Secret to EphemeralKey as it now should be accessed directly
+* [#1297](https://github.com/stripe/stripe-go/pull/1297) API Updates
+  * Add support for `TaxIDCollection` to `CheckoutSession` and `CheckoutSessionParams`.
+
+## 72.49.0 - 2021-06-04
+* [#1292](https://github.com/stripe/stripe-go/pull/1292) API Updates
+  * Add support for `Controller` to `Account`
+* [#1287](https://github.com/stripe/stripe-go/pull/1287) [#1293](https://github.com/stripe/stripe-go/pull/1293) [#1290](https://github.com/stripe/stripe-go/pull/1290) codegen: 4 files 
+  * Add missing enum members to `BalanceTransactionType`, `BalanceTransactionSourceType`
+  * Add support for `FeeRefund` and `Topup` to `BalanceTransactionSource`
+  * Add support for `Object` on `BalanceTransaction` and `Transfer`
+  * Removed a redundant form-encoding conversion for `UpTo` in `PriceTierParams.AppendTo` method
+
+
+## 72.48.0 - 2021-06-04
+* [#1291](https://github.com/stripe/stripe-go/pull/1291) API Updates
+  * Add new resource `TaxCode`.
+  * Add support for `AutomaticTax` on `CheckoutSession`, `Invoice`, `Subscription`, and `SubscriptionScheduleDefaultSettings`.
+  * Add support for `CustomerUpdate` on `CheckoutSessionCustomerUpdateParams`
+  * Add support for `Tax` on `Customer` and `CustomerParams`
+  * Add support for `CustomerDetails` on `InvoiceParams`
+  * Add support for `TaxBehavior` on `Price`, `PriceParams`, `CheckoutSessionLineItemPriceDataParams`,  `PriceParams`, `SubscriptionItemPriceDataParams`, `SubscriptionSchedulePhaseAutomaticTaxParams`,`SubscriptionSchedulePhaseAddInvoiceItemPriceDataParams`, and `InvoiceItemPriceDataParams`
+  * Add support for `TaxCode` on `CheckoutSessionLineItemPriceDataProductParams`, `Product`, `ProductParams`, `PlanProductParams` and `PriceProductDataParams`
+
+## 72.47.0 - 2021-05-26
+* [#1286](https://github.com/stripe/stripe-go/pull/1286) API Updates
+  * Added support for `Documents` to `PersonParams`
+
+## 72.46.0 - 2021-05-25
+* [#1285](https://github.com/stripe/stripe-go/pull/1285) API Updates
+  * Add support for Identity VerificationSession and VerificationReport APIs
+
+## 72.45.0 - 2021-05-06
+* [#1280](https://github.com/stripe/stripe-go/pull/1280) API Updates
+  * Added support for `reference` on `Charge.payment_method_details.afterpay_clearpay`
+  * Added support for `afterpay_clearpay` on `PaymentIntent.payment_method_options`.
+* [#1279](https://github.com/stripe/stripe-go/pull/1279) API Updates
+  * Add support for `payment_intent` on `RadarEarlyFraudWarning` and `RadarEarlyFraudWarningListParams`.
+
+## 72.44.0 - 2021-05-05
+* [#1278](https://github.com/stripe/stripe-go/pull/1278) API updates
+  * Add support for `dhl` and `royal_mail` as enum members of `IssuingCardShippingCarrier`.
+  * Add support for `single_member_llc` as an enum member of `AccountCompanyStructure`.
+
 ## 72.43.0 - 2021-04-19
 * [#1277](https://github.com/stripe/stripe-go/pull/1277), [#1276](https://github.com/stripe/stripe-go/pull/1276) Codegen-related changes
   * Add missing `Object` field to several structs.

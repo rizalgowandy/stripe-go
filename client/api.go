@@ -28,6 +28,8 @@ import (
 	"github.com/stripe/stripe-go/v72/feerefund"
 	"github.com/stripe/stripe-go/v72/file"
 	"github.com/stripe/stripe-go/v72/filelink"
+	"github.com/stripe/stripe-go/v72/identity/verificationreport"
+	"github.com/stripe/stripe-go/v72/identity/verificationsession"
 	"github.com/stripe/stripe-go/v72/invoice"
 	"github.com/stripe/stripe-go/v72/invoiceitem"
 	"github.com/stripe/stripe-go/v72/issuing/authorization"
@@ -49,6 +51,7 @@ import (
 	"github.com/stripe/stripe-go/v72/price"
 	"github.com/stripe/stripe-go/v72/product"
 	"github.com/stripe/stripe-go/v72/promotioncode"
+	"github.com/stripe/stripe-go/v72/quote"
 	"github.com/stripe/stripe-go/v72/radar/earlyfraudwarning"
 	"github.com/stripe/stripe-go/v72/radar/valuelist"
 	"github.com/stripe/stripe-go/v72/radar/valuelistitem"
@@ -66,6 +69,7 @@ import (
 	"github.com/stripe/stripe-go/v72/sub"
 	"github.com/stripe/stripe-go/v72/subitem"
 	"github.com/stripe/stripe-go/v72/subschedule"
+	"github.com/stripe/stripe-go/v72/taxcode"
 	"github.com/stripe/stripe-go/v72/taxid"
 	"github.com/stripe/stripe-go/v72/taxrate"
 	terminalconnectiontoken "github.com/stripe/stripe-go/v72/terminal/connectiontoken"
@@ -131,6 +135,10 @@ type API struct {
 	Files *file.Client
 	// FileLinks is the client used to invoke the /file_links APIs.
 	FileLinks *filelink.Client
+	// IdentityVerificationReports is the client used to invoke the /identity/verification_reports APIs.
+	IdentityVerificationReports *verificationreport.Client
+	// IdentityVerificationSessions is the client used to invoke the /identity/verification_sessions APIs.
+	IdentityVerificationSessions *verificationsession.Client
 	// Invoices is the client used to invoke /invoices APIs.
 	Invoices *invoice.Client
 	// InvoiceItems is the client used to invoke /invoiceitems APIs.
@@ -173,6 +181,8 @@ type API struct {
 	Products *product.Client
 	// PromotionCodes is the client used to invoke /promotion_codes APIs.
 	PromotionCodes *promotioncode.Client
+	// Quote is the client used to invoke /quotes APIs.
+	Quotes *quote.Client
 	// RadarEarlyFraudWarnings is the client used to invoke /radar/early_fraud_warnings APIs.
 	RadarEarlyFraudWarnings *earlyfraudwarning.Client
 	// RadarValueLists is the client used to invoke /radar/value_lists APIs.
@@ -209,6 +219,8 @@ type API struct {
 	SubscriptionSchedules *subschedule.Client
 	// TaxIDs is the client used to invoke /tax_ids APIs.
 	TaxIDs *taxid.Client
+	// TaxCodes is the client used to invoke /tax_codes APIs.
+	TaxCodes *taxcode.Client
 	// TaxRates is the client used to invoke /tax_rates APIs.
 	TaxRates *taxrate.Client
 	// TerminalConnectionTokens is the client used to invoke /terminal/connectiontokens related APIs.
@@ -267,6 +279,8 @@ func (a *API) Init(key string, backends *stripe.Backends) {
 	a.FeeRefunds = &feerefund.Client{B: backends.API, Key: key}
 	a.Files = &file.Client{B: backends.Uploads, Key: key}
 	a.FileLinks = &filelink.Client{B: backends.API, Key: key}
+	a.IdentityVerificationReports = &verificationreport.Client{B: backends.API, Key: key}
+	a.IdentityVerificationSessions = &verificationsession.Client{B: backends.API, Key: key}
 	a.Invoices = &invoice.Client{B: backends.API, Key: key}
 	a.InvoiceItems = &invoiceitem.Client{B: backends.API, Key: key}
 	a.IssuingAuthorizations = &authorization.Client{B: backends.API, Key: key}
@@ -288,6 +302,7 @@ func (a *API) Init(key string, backends *stripe.Backends) {
 	a.Prices = &price.Client{B: backends.API, Key: key}
 	a.Products = &product.Client{B: backends.API, Key: key}
 	a.PromotionCodes = &promotioncode.Client{B: backends.API, Key: key}
+	a.Quotes = &quote.Client{B: backends.API, PDFBackend: backends.Uploads, Key: key}
 	a.RadarEarlyFraudWarnings = &earlyfraudwarning.Client{B: backends.API, Key: key}
 	a.RadarValueLists = &valuelist.Client{B: backends.API, Key: key}
 	a.RadarValueListItems = &valuelistitem.Client{B: backends.API, Key: key}
@@ -306,6 +321,7 @@ func (a *API) Init(key string, backends *stripe.Backends) {
 	a.SubscriptionItems = &subitem.Client{B: backends.API, Key: key}
 	a.SubscriptionSchedules = &subschedule.Client{B: backends.API, Key: key}
 	a.TaxIDs = &taxid.Client{B: backends.API, Key: key}
+	a.TaxCodes = &taxcode.Client{B: backends.API, Key: key}
 	a.TaxRates = &taxrate.Client{B: backends.API, Key: key}
 	a.TerminalConnectionTokens = &terminalconnectiontoken.Client{B: backends.API, Key: key}
 	a.TerminalLocations = &terminallocation.Client{B: backends.API, Key: key}

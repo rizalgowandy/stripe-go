@@ -110,6 +110,14 @@ const (
 	PaymentIntentPaymentMethodOptionsCardRequestThreeDSecureAutomatic PaymentIntentPaymentMethodOptionsCardRequestThreeDSecure = "automatic"
 )
 
+type PaymentIntentPaymentMethodOptionsWechatPayClient string
+
+const (
+	PaymentIntentPaymentMethodOptionsWechatPayClientAndroid PaymentIntentPaymentMethodOptionsWechatPayClient = "android"
+	PaymentIntentPaymentMethodOptionsWechatPayClientIOS     PaymentIntentPaymentMethodOptionsWechatPayClient = "ios"
+	PaymentIntentPaymentMethodOptionsWechatPayClientWeb     PaymentIntentPaymentMethodOptionsWechatPayClient = "web"
+)
+
 // PaymentIntentSetupFutureUsage is the list of allowed values for SetupFutureUsage.
 type PaymentIntentSetupFutureUsage string
 
@@ -202,6 +210,7 @@ type PaymentIntentPaymentMethodDataParams struct {
 	Alipay           *PaymentMethodAlipayParams           `form:"alipay"`
 	AUBECSDebit      *PaymentMethodAUBECSDebitParams      `form:"au_becs_debit"`
 	BillingDetails   *BillingDetailsParams                `form:"billing_details"`
+	Boleto           *PaymentMethodBoletoParams           `form:"boleto"`
 	Card             *PaymentMethodCardParams             `form:"card"`
 	EPS              *PaymentMethodEPSParams              `form:"eps"`
 	FPX              *PaymentMethodFPXParams              `form:"fpx"`
@@ -210,6 +219,7 @@ type PaymentIntentPaymentMethodDataParams struct {
 	OXXO             *PaymentMethodOXXOParams             `form:"oxxo"`
 	P24              *PaymentMethodP24Params              `form:"p24"`
 	SepaDebit        *PaymentMethodSepaDebitParams        `form:"sepa_debit"`
+	WechatPay        *PaymentMethodWechatPayParams        `form:"sepa_debit"`
 	Type             *string                              `form:"type"`
 }
 
@@ -229,6 +239,12 @@ type PaymentIntentPaymentMethodOptionsACSSDebitParams struct {
 	VerificationMethod *string                                                         `form:"verification_method"`
 }
 
+// PaymentIntentPaymentMethodOptionsAfterpayClearpayParams represents the AfterpayClearpay-specific options
+// applied to a PaymentIntent.
+type PaymentIntentPaymentMethodOptionsAfterpayClearpayParams struct {
+	Reference *string `form:"reference"`
+}
+
 // PaymentIntentPaymentMethodOptionsAlipayParams represents the Alipay-specific options
 // applied to a PaymentIntent.
 type PaymentIntentPaymentMethodOptionsAlipayParams struct {
@@ -238,6 +254,12 @@ type PaymentIntentPaymentMethodOptionsAlipayParams struct {
 // applied to a PaymentIntent.
 type PaymentIntentPaymentMethodOptionsBancontactParams struct {
 	PreferredLanguage *string `form:"preferred_language"`
+}
+
+// PaymentIntentPaymentMethodOptionsBoletoParams represents the boleto-specific options
+// applied to a PaymentIntent.
+type PaymentIntentPaymentMethodOptionsBoletoParams struct {
+	ExpiresAfterDays *int64 `form:"expires_after_days"`
 }
 
 // PaymentIntentPaymentMethodOptionsCardInstallmentsPlanParams represents details about the
@@ -277,15 +299,25 @@ type PaymentIntentPaymentMethodOptionsSofortParams struct {
 	PreferredLanguage *string `form:"preferred_language"`
 }
 
+// PaymentIntentPaymentMethodOptionsWechatPayParams represents the wechat_pay-specific options applied to a
+// PaymentIntent.
+type PaymentIntentPaymentMethodOptionsWechatPayParams struct {
+	AppID  *string `form:"app_id"`
+	Client *string `form:"client"`
+}
+
 // PaymentIntentPaymentMethodOptionsParams represents the type-specific payment method options
 // applied to a PaymentIntent.
 type PaymentIntentPaymentMethodOptionsParams struct {
-	ACSSDebit  *PaymentIntentPaymentMethodOptionsACSSDebitParams  `form:"acss_debit"`
-	Alipay     *PaymentIntentPaymentMethodOptionsAlipayParams     `form:"alipay"`
-	Bancontact *PaymentIntentPaymentMethodOptionsBancontactParams `form:"bancontact"`
-	Card       *PaymentIntentPaymentMethodOptionsCardParams       `form:"card"`
-	OXXO       *PaymentIntentPaymentMethodOptionsOXXOParams       `form:"oxxo"`
-	Sofort     *PaymentIntentPaymentMethodOptionsSofortParams     `form:"sofort"`
+	ACSSDebit        *PaymentIntentPaymentMethodOptionsACSSDebitParams        `form:"acss_debit"`
+	AfterpayClearpay *PaymentIntentPaymentMethodOptionsAfterpayClearpayParams `form:"afterpay_clearpay"`
+	Alipay           *PaymentIntentPaymentMethodOptionsAlipayParams           `form:"alipay"`
+	Bancontact       *PaymentIntentPaymentMethodOptionsBancontactParams       `form:"bancontact"`
+	Boleto           *PaymentIntentPaymentMethodOptionsBoletoParams           `form:"boleto"`
+	Card             *PaymentIntentPaymentMethodOptionsCardParams             `form:"card"`
+	OXXO             *PaymentIntentPaymentMethodOptionsOXXOParams             `form:"oxxo"`
+	Sofort           *PaymentIntentPaymentMethodOptionsSofortParams           `form:"sofort"`
+	WechatPay        *PaymentIntentPaymentMethodOptionsWechatPayParams        `form:"sofort"`
 }
 
 // PaymentIntentTransferDataParams is the set of parameters allowed for the transfer hash.
@@ -345,6 +377,15 @@ type PaymentIntentNextActionAlipayHandleRedirect struct {
 	URL        string `json:"url"`
 }
 
+// PaymentIntentNextActionBoletoDisplayDetails represents the resource for the next action of type
+// "boleto_display_details".
+type PaymentIntentNextActionBoletoDisplayDetails struct {
+	ExpiresAt        int64  `json:"expires_at"`
+	HostedVoucherURL string `json:"hosted_voucher_url"`
+	Number           string `json:"number"`
+	PDF              string `json:"pdf"`
+}
+
 // PaymentIntentNextActionOXXODisplayDetails represents the resource for the next action of type
 // "oxxo_display_details".
 type PaymentIntentNextActionOXXODisplayDetails struct {
@@ -371,14 +412,47 @@ type PaymentIntentNextActionVerifyWithMicrodeposits struct {
 	HostedVerificationURL string `json:"hosted_verification_url"`
 }
 
+// PaymentIntentNextActionWechatPayDisplayQRCode represents the resource for the next action of type
+// "wechat_pay_display_qr_code"
+type PaymentIntentNextActionWechatPayDisplayQRCode struct {
+	Data         string `json:"data"`
+	ImageDataURL string `json:"image_data_url"`
+}
+
+// PaymentIntentNextActionWechatPayRedirectToAndroidApp represents the resource for the next action of type
+// "wechat_pay_redirect_to_android_app"
+type PaymentIntentNextActionWechatPayRedirectToAndroidApp struct {
+	AppID     string `json:"app_id"`
+	NonceStr  string `json:"nonce_str"`
+	Package   string `json:"package"`
+	PartnerID string `json:"partner_id"`
+	PrepayID  string `json:"prepay_id"`
+	Sign      string `json:"sign"`
+	Timestamp string `json:"timestamp"`
+}
+
+// PaymentIntentNextActionWechatPayRedirectToIOSApp represents the resource for the next action of type
+// "wechat_pay_redirect_to_ios_app"
+type PaymentIntentNextActionWechatPayRedirectToIOSApp struct {
+	NativeURL string `json:"native_url"`
+}
+
 // PaymentIntentNextAction represents the type of action to take on a payment intent.
 type PaymentIntentNextAction struct {
-	AlipayHandleRedirect    *PaymentIntentNextActionAlipayHandleRedirect    `json:"alipay_handle_redirect"`
-	OXXODisplayDetails      *PaymentIntentNextActionOXXODisplayDetails      `json:"oxxo_display_details"`
-	RedirectToURL           *PaymentIntentNextActionRedirectToURL           `json:"redirect_to_url"`
-	Type                    PaymentIntentNextActionType                     `json:"type"`
-	UseStripeSDK            *PaymentIntentNextActionUseStripeSDK            `json:"use_stripe_sdk"`
-	VerifyWithMicrodeposits *PaymentIntentNextActionVerifyWithMicrodeposits `json:"verify_with_microdeposits"`
+	AlipayHandleRedirect          *PaymentIntentNextActionAlipayHandleRedirect          `json:"alipay_handle_redirect"`
+	BoletoDisplayDetails          *PaymentIntentNextActionBoletoDisplayDetails          `json:"boleto_display_details"`
+	OXXODisplayDetails            *PaymentIntentNextActionOXXODisplayDetails            `json:"oxxo_display_details"`
+	RedirectToURL                 *PaymentIntentNextActionRedirectToURL                 `json:"redirect_to_url"`
+	Type                          PaymentIntentNextActionType                           `json:"type"`
+	UseStripeSDK                  *PaymentIntentNextActionUseStripeSDK                  `json:"use_stripe_sdk"`
+	VerifyWithMicrodeposits       *PaymentIntentNextActionVerifyWithMicrodeposits       `json:"verify_with_microdeposits"`
+	WechatPayDisplayQRCode        *PaymentIntentNextActionWechatPayDisplayQRCode        `json:"wechat_pay_display_qr_code"`
+	WechatPayRedirectToAndroidApp *PaymentIntentNextActionWechatPayRedirectToAndroidApp `json:"wechat_pay_redirect_to_android_app"`
+	WechatPayRedirectToIOSApp     *PaymentIntentNextActionWechatPayRedirectToIOSApp     `json:"wechat_pay_redirect_to_ios_app"`
+}
+
+type PaymentIntentPaymentMethodOptionsBoleto struct {
+	ExpiresAfterDays int64 `json:"expires_after_days"`
 }
 
 // PaymentIntentPaymentMethodOptionsCardInstallmentsPlan describe a specific card installment plan.
@@ -412,6 +486,12 @@ type PaymentIntentPaymentMethodOptionsACSSDebit struct {
 	VerificationMethod PaymentIntentPaymentMethodOptionsACSSDebitVerificationMethod `json:"verification_method"`
 }
 
+// PaymentIntentPaymentMethodOptionsAfterpayClearpay describes the AfterpayClearpay-specific options associated
+// with that payment intent.
+type PaymentIntentPaymentMethodOptionsAfterpayClearpay struct {
+	Reference string `json:"reference"`
+}
+
 // PaymentIntentPaymentMethodOptionsAlipay is the set of Alipay-specific options associated
 // with that payment intent.
 type PaymentIntentPaymentMethodOptionsAlipay struct {
@@ -443,15 +523,25 @@ type PaymentIntentPaymentMethodOptionsSofort struct {
 	PreferredLanguage string `json:"preferred_language"`
 }
 
+// PaymentIntentPaymentMethodOptionsWechatPay is the set of wechat_pay-specific options associated
+// with that payment intent.
+type PaymentIntentPaymentMethodOptionsWechatPay struct {
+	AppID  string                                           `json:"app_id"`
+	Client PaymentIntentPaymentMethodOptionsWechatPayClient `json:"client"`
+}
+
 // PaymentIntentPaymentMethodOptions is the set of payment method-specific options associated with
 // that payment intent.
 type PaymentIntentPaymentMethodOptions struct {
-	ACSSDebit  *PaymentIntentPaymentMethodOptionsACSSDebit  `json:"acss_debit"`
-	Alipay     *PaymentIntentPaymentMethodOptionsAlipay     `json:"alipay"`
-	Bancontact *PaymentIntentPaymentMethodOptionsBancontact `json:"bancontact"`
-	Card       *PaymentIntentPaymentMethodOptionsCard       `json:"card"`
-	OXXO       *PaymentIntentPaymentMethodOptionsOXXO       `json:"oxxo"`
-	Sofort     *PaymentIntentPaymentMethodOptionsSofort     `json:"sofort"`
+	ACSSDebit        *PaymentIntentPaymentMethodOptionsACSSDebit        `json:"acss_debit"`
+	AfterpayClearpay *PaymentIntentPaymentMethodOptionsAfterpayClearpay `json:"afterpay_clearpay"`
+	Alipay           *PaymentIntentPaymentMethodOptionsAlipay           `json:"alipay"`
+	Bancontact       *PaymentIntentPaymentMethodOptionsBancontact       `json:"bancontact"`
+	Boleto           *PaymentIntentPaymentMethodOptionsBoleto           `json:"boleto"`
+	Card             *PaymentIntentPaymentMethodOptionsCard             `json:"card"`
+	OXXO             *PaymentIntentPaymentMethodOptionsOXXO             `json:"oxxo"`
+	Sofort           *PaymentIntentPaymentMethodOptionsSofort           `json:"sofort"`
+	WechatPay        *PaymentIntentPaymentMethodOptionsWechatPay        `json:"wechat_pay"`
 }
 
 // PaymentIntentTransferData represents the information for the transfer associated with a payment intent.
