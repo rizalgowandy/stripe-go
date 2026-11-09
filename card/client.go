@@ -1,40 +1,51 @@
-// Package card provides the /cards APIs
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package card provides the card related APIs
 package card
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /cards APIs.
+// Client is used to invoke card related APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// New creates a new card.
+// Create creates a new card
 func New(params *stripe.CardParams) (*stripe.Card, error) {
 	return getC().New(params)
 }
 
-// New creates a new card.
+// Create creates a new card
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) New(params *stripe.CardParams) (*stripe.Card, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
 
 	var path string
-	if params.Account != nil {
-		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts",
-			stripe.StringValue(params.Account))
+	if (params.Account != nil && params.Customer != nil) || (params.Account == nil && params.Customer == nil) {
+		return nil, fmt.Errorf("invalid card params: exactly one of Account or Customer need to be set")
+	} else if params.Account != nil {
+		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts", stripe.StringValue(params.Account))
 	} else if params.Customer != nil {
-		path = stripe.FormatURLPath("/v1/customers/%s/sources",
-			stripe.StringValue(params.Customer))
-	} else {
-		return nil, errors.New("Invalid card params: either account or customer need to be set")
+		path = stripe.FormatURLPath("/v1/customers/%s/sources", stripe.StringValue(params.Customer))
 	}
 
 	body := &form.Values{}
@@ -44,11 +55,11 @@ func (c Client) New(params *stripe.CardParams) (*stripe.Card, error) {
 	// include some parameters that are undesirable here.
 	params.AppendToAsCardSourceOrExternalAccount(body, nil)
 
-	// Because card creation uses the custom append above, we have to make an
-	// explicit call using a form and CallRaw instead of the standard Call
-	// (which takes a set of parameters).
+	// Because card creation uses the custom append above, we have to
+	// make an explicit call using a form and CallRaw instead of the standard
+	// Call (which takes a set of parameters).
 	card := &stripe.Card{}
-	err := c.B.CallRaw(http.MethodPost, path, c.Key, body, &params.Params, card)
+	err := c.B.CallRaw(http.MethodPost, path, c.Key, []byte(body.Encode()), &params.Params, card)
 	return card, err
 }
 
@@ -58,20 +69,22 @@ func Get(id string, params *stripe.CardParams) (*stripe.Card, error) {
 }
 
 // Get returns the details of a card.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Get(id string, params *stripe.CardParams) (*stripe.Card, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
 
 	var path string
-	if params.Account != nil {
-		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts/%s",
-			stripe.StringValue(params.Account), id)
+	if (params.Account != nil && params.Customer != nil) || (params.Account == nil && params.Customer == nil) {
+		return nil, fmt.Errorf("invalid card params: exactly one of Account or Customer need to be set")
+	} else if params.Account != nil {
+		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts/%s", stripe.StringValue(params.Account), id)
 	} else if params.Customer != nil {
-		path = stripe.FormatURLPath("/v1/customers/%s/sources/%s",
-			stripe.StringValue(params.Customer), id)
-	} else {
-		return nil, errors.New("Invalid card params: either account or customer need to be set")
+		path = stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
 	}
 
 	card := &stripe.Card{}
@@ -79,26 +92,28 @@ func (c Client) Get(id string, params *stripe.CardParams) (*stripe.Card, error) 
 	return card, err
 }
 
-// Update updates a card's properties.
+// Update a specified source for a given customer.
 func Update(id string, params *stripe.CardParams) (*stripe.Card, error) {
 	return getC().Update(id, params)
 }
 
-// Update updates a card's properties.
+// Update a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Update(id string, params *stripe.CardParams) (*stripe.Card, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
 
 	var path string
-	if params.Account != nil {
-		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts/%s",
-			stripe.StringValue(params.Account), id)
+	if (params.Account != nil && params.Customer != nil) || (params.Account == nil && params.Customer == nil) {
+		return nil, fmt.Errorf("invalid card params: exactly one of Account or Customer need to be set")
+	} else if params.Account != nil {
+		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts/%s", stripe.StringValue(params.Account), id)
 	} else if params.Customer != nil {
-		path = stripe.FormatURLPath("/v1/customers/%s/sources/%s",
-			stripe.StringValue(params.Customer), id)
-	} else {
-		return nil, errors.New("Invalid card params: either account or customer need to be set")
+		path = stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
 	}
 
 	card := &stripe.Card{}
@@ -106,72 +121,78 @@ func (c Client) Update(id string, params *stripe.CardParams) (*stripe.Card, erro
 	return card, err
 }
 
-// Del removes a card.
+// Delete a specified source for a given customer.
 func Del(id string, params *stripe.CardParams) (*stripe.Card, error) {
 	return getC().Del(id, params)
 }
 
-// Del removes a card.
+// Delete a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Del(id string, params *stripe.CardParams) (*stripe.Card, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
 
 	var path string
-	if params.Account != nil {
+	if (params.Account != nil && params.Customer != nil) || (params.Account == nil && params.Customer == nil) {
+		return nil, fmt.Errorf("invalid card params: exactly one of Account or Customer need to be set")
+	} else if params.Account != nil {
 		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts/%s", stripe.StringValue(params.Account), id)
 	} else if params.Customer != nil {
 		path = stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
-	} else {
-		return nil, errors.New("Invalid card params: either account or customer need to be set")
 	}
 
 	card := &stripe.Card{}
 	err := c.B.Call(http.MethodDelete, path, c.Key, params, card)
 	return card, err
 }
-
-// List returns a list of cards.
 func List(params *stripe.CardListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of cards.
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) List(listParams *stripe.CardListParams) *Iter {
 	var path string
 	var outerErr error
 
-	// Because the external accounts and sources endpoints can return non-card
-	// objects, CardListParam's `AppendTo` will add the filter `object=card` to
-	// make sure that only cards come back with the response.
+	// There's no cards list URL, so we use one sources or external
+	// accounts. An override on CardListParam's `AppendTo` will add the
+	// filter `object=card` to make sure that only cards come
+	// back with the response.
 	if listParams == nil {
-		outerErr = errors.New("params should not be nil")
+		outerErr = fmt.Errorf("params should not be nil")
+	} else if (listParams.Account != nil && listParams.Customer != nil) || (listParams.Account == nil && listParams.Customer == nil) {
+		outerErr = fmt.Errorf("invalid card params: exactly one of Account or Customer need to be set")
 	} else if listParams.Account != nil {
 		path = stripe.FormatURLPath("/v1/accounts/%s/external_accounts",
 			stripe.StringValue(listParams.Account))
 	} else if listParams.Customer != nil {
 		path = stripe.FormatURLPath("/v1/customers/%s/sources",
 			stripe.StringValue(listParams.Customer))
-	} else {
-		outerErr = errors.New("Invalid card params: either account or customer need to be set")
 	}
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.CardList{}
 
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.CardList{}
+			if outerErr != nil {
+				return nil, list, outerErr
+			}
 
-		if outerErr != nil {
-			return nil, list, outerErr
-		}
+			err := c.B.CallRaw(http.MethodGet, path, c.Key, []byte(b.Encode()), p, list)
 
-		err := c.B.CallRaw(http.MethodGet, path, c.Key, b, p, list)
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
-
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
 // Iter is an iterator for cards.
@@ -184,9 +205,9 @@ func (i *Iter) Card() *stripe.Card {
 	return i.Current().(*stripe.Card)
 }
 
-// CardList returns the current list object which the iterator is currently
-// using. List objects will change as new API calls are made to continue
-// pagination.
+// CardList returns the current list object which the iterator is
+// currently using. List objects will change as new API calls are made to
+// continue pagination.
 func (i *Iter) CardList() *stripe.CardList {
 	return i.List().(*stripe.CardList)
 }

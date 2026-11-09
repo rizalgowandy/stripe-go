@@ -3,9 +3,10 @@ package plan
 import (
 	"testing"
 
+	"github.com/shopspring/decimal"
 	assert "github.com/stretchr/testify/require"
-	stripe "github.com/stripe/stripe-go/v72"
-	_ "github.com/stripe/stripe-go/v72/testing"
+	stripe "github.com/stripe/stripe-go/v87"
+	_ "github.com/stripe/stripe-go/v87/testing"
 )
 
 func TestPlanDel(t *testing.T) {
@@ -32,7 +33,7 @@ func TestPlanList(t *testing.T) {
 
 func TestPlanNew(t *testing.T) {
 	plan, err := New(&stripe.PlanParams{
-		AmountDecimal: stripe.Float64(0.0123456789),
+		AmountDecimal: stripe.Pointer(decimal.RequireFromString("0.0123456789")),
 		BillingScheme: stripe.String(string(stripe.PlanBillingSchemeTiered)),
 		Currency:      stripe.String(string(stripe.CurrencyUSD)),
 		ID:            stripe.String("sapphire-elite"),
@@ -49,18 +50,6 @@ func TestPlanNew(t *testing.T) {
 			{UnitAmount: stripe.Int64(200), UpTo: stripe.Int64(20)},
 			{UnitAmount: stripe.Int64(200), UpToInf: stripe.Bool(true)},
 		},
-	})
-	assert.Nil(t, err)
-	assert.NotNil(t, plan)
-}
-
-func TestPlanNewWithProductID(t *testing.T) {
-	plan, err := New(&stripe.PlanParams{
-		Amount:    stripe.Int64(1),
-		Currency:  stripe.String(string(stripe.CurrencyUSD)),
-		ID:        stripe.String("sapphire-elite"),
-		Interval:  stripe.String(string(stripe.PlanIntervalMonth)),
-		ProductID: stripe.String("prod_12345abc"),
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, plan)

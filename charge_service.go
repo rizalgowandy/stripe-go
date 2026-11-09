@@ -1,0 +1,104 @@
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+package stripe
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/stripe/stripe-go/v87/form"
+)
+
+// v1ChargeService is used to invoke /v1/charges APIs.
+type v1ChargeService struct {
+	B   Backend
+	Key string
+}
+
+// This method is deprecated and will be removed soon. If your integration uses it, you need to update it to use a different payment flow, such as [the Payment Intents API](https://docs.stripe.com/docs/payments/payment-intents).
+func (c v1ChargeService) Create(ctx context.Context, params *ChargeCreateParams) (*Charge, error) {
+	if params == nil {
+		params = &ChargeCreateParams{}
+	}
+	params.Context = ctx
+	charge := &Charge{}
+	err := c.B.Call(http.MethodPost, "/v1/charges", c.Key, params, charge)
+	return charge, err
+}
+
+// Retrieves the details of a charge that has previously been created. Supply the unique charge ID that was returned from your previous request, and Stripe will return the corresponding charge information. The same information is returned when creating or refunding the charge.
+func (c v1ChargeService) Retrieve(ctx context.Context, id string, params *ChargeRetrieveParams) (*Charge, error) {
+	if params == nil {
+		params = &ChargeRetrieveParams{}
+	}
+	params.Context = ctx
+	path := FormatURLPath("/v1/charges/%s", id)
+	charge := &Charge{}
+	err := c.B.Call(http.MethodGet, path, c.Key, params, charge)
+	return charge, err
+}
+
+// Updates the specified charge by setting the values of the parameters passed. Any parameters not provided will be left unchanged.
+func (c v1ChargeService) Update(ctx context.Context, id string, params *ChargeUpdateParams) (*Charge, error) {
+	if params == nil {
+		params = &ChargeUpdateParams{}
+	}
+	params.Context = ctx
+	path := FormatURLPath("/v1/charges/%s", id)
+	charge := &Charge{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, charge)
+	return charge, err
+}
+
+// This method is deprecated and will be removed soon. If your integration uses it, you need to update it to use a different payment flow, such as [the Payment Intents API](https://docs.stripe.com/docs/payments/payment-intents).
+func (c v1ChargeService) Capture(ctx context.Context, id string, params *ChargeCaptureParams) (*Charge, error) {
+	if params == nil {
+		params = &ChargeCaptureParams{}
+	}
+	params.Context = ctx
+	path := FormatURLPath("/v1/charges/%s/capture", id)
+	charge := &Charge{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, charge)
+	return charge, err
+}
+
+// Returns a list of charges you've previously created. The charges are returned in sorted order, with the most recent charges appearing first.
+func (c v1ChargeService) List(ctx context.Context, listParams *ChargeListParams) *V1List[*Charge] {
+	if listParams == nil {
+		listParams = &ChargeListParams{}
+	}
+	listParams.Context = ctx
+	return newV1List(ctx, listParams, func(ctx context.Context, p *Params, b *form.Values) (*v1Page[*Charge], error) {
+		list := &v1Page[*Charge]{}
+		if p == nil {
+			p = &Params{}
+		}
+		p.Context = ctx
+		err := c.B.CallRaw(http.MethodGet, "/v1/charges", c.Key, []byte(b.Encode()), p, list)
+		return list, err
+	})
+}
+
+// Search for charges you've previously created using Stripe's [Search Query Language](https://docs.stripe.com/docs/search#search-query-language).
+// Don't use search in read-after-write flows where strict consistency is necessary. Under normal operating
+// conditions, data is searchable in less than a minute. Occasionally, propagation of new or updated data can be up
+// to an hour behind during outages. Search functionality is not available to merchants in India.
+func (c v1ChargeService) Search(ctx context.Context, params *ChargeSearchParams) *V1SearchList[*Charge] {
+	if params == nil {
+		params = &ChargeSearchParams{}
+	}
+	params.Context = ctx
+	return newV1SearchList(ctx, params, func(ctx context.Context, p *Params, b *form.Values) (*v1SearchPage[*Charge], error) {
+		list := &v1SearchPage[*Charge]{}
+		if p == nil {
+			p = &Params{}
+		}
+		p.Context = ctx
+		err := c.B.CallRaw(http.MethodGet, "/v1/charges/search", c.Key, []byte(b.Encode()), p, list)
+		return list, err
+	})
+}

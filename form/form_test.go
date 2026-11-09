@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	assert "github.com/stretchr/testify/require"
 )
 
@@ -29,6 +30,9 @@ type testStruct struct {
 	BoolPtr *bool `form:"bool_ptr"`
 
 	Emptied bool `form:"emptied,empty"`
+
+	Decimal    decimal.Decimal  `form:"decimal"`
+	DecimalPtr *decimal.Decimal `form:"decimal_ptr"`
 
 	Float32    float32  `form:"float32"`
 	Float32Ptr *float32 `form:"float32_ptr"`
@@ -57,8 +61,9 @@ type testStruct struct {
 
 	Map map[string]interface{} `form:"map"`
 
-	Slice    []string  `form:"slice"`
-	SlicePtr *[]string `form:"slice_ptr"`
+	Slice    []string   `form:"slice"`
+	Slice2D  [][]string `form:"slice2d"`
+	SlicePtr *[]string  `form:"slice_ptr"`
 
 	String    string  `form:"string"`
 	StringPtr *string `form:"string_ptr"`
@@ -130,6 +135,10 @@ func TestAppendTo(t *testing.T) {
 	var boolValT = true
 	var boolValF = false
 
+	var decimalVal = decimal.RequireFromString("12345678901234567890.123456789012")
+	var decimalFraction = decimal.RequireFromString("0.000000000001")
+	var decimalZero = decimal.Zero
+
 	var float32Val float32 = 1.2345
 	var float32Val0 float32
 
@@ -195,6 +204,11 @@ func TestAppendTo(t *testing.T) {
 		{"bool_ptr", &testStruct{BoolPtr: &boolValF}, stringPtr("false")},
 
 		{"emptied", &testStruct{Emptied: true}, stringPtr("")},
+
+		{"decimal", &testStruct{Decimal: decimalVal}, stringPtr("12345678901234567890.123456789012")},
+		{"decimal", &testStruct{Decimal: decimalFraction}, stringPtr("0.000000000001")},
+		{"decimal_ptr", &testStruct{DecimalPtr: &decimalZero}, stringPtr("0")},
+		{"decimal_ptr", &testStruct{}, nil},
 
 		{"float32", &testStruct{Float32: float32Val}, stringPtr("1.2345")},
 		{"float32_ptr", &testStruct{Float32Ptr: &float32Val}, stringPtr("1.2345")},
@@ -280,6 +294,12 @@ func TestAppendTo(t *testing.T) {
 		{"slice[2]", &testStruct{Slice: sliceVal}, stringPtr("3")},
 		{"slice", &testStruct{Slice: []string{}}, stringPtr("")},
 		{"slice", &testStruct{Slice: nil}, nil},
+
+		// 2D slice
+		{"slice2d[0][0]", &testStruct{Slice2D: [][]string{{"a", "b"}, {"c"}}}, stringPtr("a")},
+		{"slice2d[0][1]", &testStruct{Slice2D: [][]string{{"a", "b"}, {"c"}}}, stringPtr("b")},
+		{"slice2d[1][0]", &testStruct{Slice2D: [][]string{{"a", "b"}, {"c"}}}, stringPtr("c")},
+		{"slice2d", &testStruct{Slice2D: nil}, nil},
 
 		{"slice_ptr[2]", &testStruct{SlicePtr: &sliceVal}, stringPtr("3")},
 
@@ -377,6 +397,43 @@ func TestAppendToPrefixed(t *testing.T) {
 	data := &testStruct{String: "foo"}
 	AppendToPrefixed(form, data, []string{"prefix"})
 	assert.Equal(t, []string{"foo"}, form.Get("prefix[string]"))
+}
+
+func TestEncode(t *testing.T) {
+	form := &Values{}
+	form.Add("foo", "bar")
+	form.Add("foo[bar]", "baz")
+	assert.Equal(t, "foo=bar&foo[bar]=baz", form.Encode())
+}
+
+func TestEncodeDeterministically(t *testing.T) {
+	data := map[string]string{
+		"first":  "foo",
+		"second": "bar",
+	}
+	initialForm := &Values{}
+	AppendTo(initialForm, data)
+	encoded := initialForm.Encode()
+
+	for i := 0; i < 100; i++ {
+		form := &Values{}
+		AppendTo(form, data)
+		assert.Equal(t, encoded, form.Encode(), "iteration %d", i)
+	}
+}
+
+func TestEncodeMapNonStringKey(t *testing.T) {
+	// Disable strict mode for this test, so the non-string key is ignored.
+	Strict = false
+	defer func() {
+		Strict = true
+	}()
+
+	form := &Values{}
+	assert.NotPanics(t, func() {
+		AppendTo(form, map[int]string{1: "foo"})
+	})
+	assert.Len(t, form.values, 0)
 }
 
 func TestFormatKey(t *testing.T) {

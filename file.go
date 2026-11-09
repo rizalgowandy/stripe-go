@@ -1,120 +1,148 @@
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
 package stripe
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/stripe/stripe-go/v87/form"
 	"io"
 	"mime/multipart"
 	"net/url"
 	"path/filepath"
-
-	"github.com/stripe/stripe-go/v72/form"
 )
 
-// FilePurpose is the purpose of a particular file.
+// The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file.
 type FilePurpose string
 
-// List of values that FilePurpose can take.
+// List of values that FilePurpose can take
 const (
 	FilePurposeAccountRequirement               FilePurpose = "account_requirement"
 	FilePurposeAdditionalVerification           FilePurpose = "additional_verification"
 	FilePurposeBusinessIcon                     FilePurpose = "business_icon"
 	FilePurposeBusinessLogo                     FilePurpose = "business_logo"
 	FilePurposeCustomerSignature                FilePurpose = "customer_signature"
-	FilePurposeDocumentProviderIdentityDocument FilePurpose = "document_provider_identity_document"
 	FilePurposeDisputeEvidence                  FilePurpose = "dispute_evidence"
+	FilePurposeDocumentProviderIdentityDocument FilePurpose = "document_provider_identity_document"
 	FilePurposeFinanceReportRun                 FilePurpose = "finance_report_run"
-	FilePurposeFoundersStockDocument            FilePurpose = "founders_stock_document"
+	FilePurposeFinancialAccountStatement        FilePurpose = "financial_account_statement"
 	FilePurposeIdentityDocument                 FilePurpose = "identity_document"
+	FilePurposeIdentityDocumentDownloadable     FilePurpose = "identity_document_downloadable"
+	FilePurposeIssuingRegulatoryReporting       FilePurpose = "issuing_regulatory_reporting"
 	FilePurposePCIDocument                      FilePurpose = "pci_document"
+	FilePurposePlatformTermsOfService           FilePurpose = "platform_terms_of_service"
+	FilePurposeSelfie                           FilePurpose = "selfie"
 	FilePurposeSigmaScheduledQuery              FilePurpose = "sigma_scheduled_query"
 	FilePurposeTaxDocumentUserUpload            FilePurpose = "tax_document_user_upload"
+	FilePurposeTerminalAndroidApk               FilePurpose = "terminal_android_apk"
+	FilePurposeTerminalReaderSplashscreen       FilePurpose = "terminal_reader_splashscreen"
+	FilePurposeTerminalWifiCertificate          FilePurpose = "terminal_wifi_certificate"
+	FilePurposeTerminalWifiPrivateKey           FilePurpose = "terminal_wifi_private_key"
 )
 
-// FileParams is the set of parameters that can be used when creating a file.
-// For more details see https://stripe.com/docs/api#create_file.
+// Returns a list of the files that your account has access to. Stripe sorts and returns the files by their creation dates, placing the most recently created files at the top.
+type FileListParams struct {
+	ListParams `form:"*"`
+	// Only return files that were created during the given date interval.
+	Created *int64 `form:"created" json:"created,omitempty"`
+	// Only return files that were created during the given date interval.
+	CreatedRange *RangeQueryParams `form:"created" json:"-"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+	// Filter queries by the file purpose. If you don't provide a purpose, the queries return unfiltered files.
+	Purpose *string `form:"purpose" json:"purpose,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *FileListParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Optional parameters that automatically create a [file link](https://docs.stripe.com/api#file_links) for the newly created file.
+type FileFileLinkDataParams struct {
+	Params `form:"*"`
+	// Set this to `true` to create a file link for the newly created file. Creating a link is only possible when the file's `purpose` is one of the following: `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `issuing_regulatory_reporting`, `pci_document`, `tax_document_user_upload`, `terminal_android_apk`, or `terminal_reader_splashscreen`.
+	Create *bool `form:"create" json:"create"`
+	// The link isn't available after this future timestamp.
+	ExpiresAt *int64 `form:"expires_at" json:"expires_at,omitempty"`
+	// Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+	Metadata    map[string]string                  `form:"metadata" json:"metadata,omitempty"`
+	UnsetFields []FileFileLinkDataParamsUnsetField `form:"-" json:"-"`
+}
+
+// FileFileLinkDataParamsUnsetField is the list of fields that can be cleared/unset on FileFileLinkDataParams.
+type FileFileLinkDataParamsUnsetField string
+
+const (
+	FileFileLinkDataParamsUnsetFieldMetadata FileFileLinkDataParamsUnsetField = "metadata"
+)
+
+// AddUnsetField adds a field to the list of fields to clear/unset on this params object.
+func (p *FileFileLinkDataParams) AddUnsetField(field FileFileLinkDataParamsUnsetField) {
+	p.UnsetFields = append(p.UnsetFields, field)
+}
+
+// AddMetadata adds a new key-value pair to the Metadata.
+func (p *FileFileLinkDataParams) AddMetadata(key string, value string) {
+	if p.Metadata == nil {
+		p.Metadata = make(map[string]string)
+	}
+
+	p.Metadata[key] = value
+}
+
+// To upload a file to Stripe, you need to send a request of type multipart/form-data. Include the file you want to upload in the request, and the parameters for creating a file.
+//
+// All of Stripe's officially supported Client libraries support sending multipart/form-data.
 type FileParams struct {
 	Params `form:"*"`
-
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
 	// FileReader is a reader with the contents of the file that should be uploaded.
 	FileReader io.Reader
 
 	// Filename is just the name of the file without path information.
 	Filename *string
-
-	Purpose *string
-
-	FileLinkData *FileFileLinkDataParams
-}
-
-// FileFileLinkDataParams is the set of parameters allowed for the
-// file_link_data hash.
-type FileFileLinkDataParams struct {
-	Params    `form:"*"`
-	Create    *bool  `form:"create"`
-	ExpiresAt *int64 `form:"expires_at"`
-}
-
-// FileListParams is the set of parameters that can be used when listing
-// files. For more details see https://stripe.com/docs/api#list_files.
-type FileListParams struct {
-	ListParams   `form:"*"`
-	Created      *int64            `form:"created"`
-	CreatedRange *RangeQueryParams `form:"created"`
-	Purpose      *string           `form:"purpose"`
-}
-
-// File is the resource representing a Stripe file.
-// For more details see https://stripe.com/docs/api#file_object.
-type File struct {
-	APIResource
-	Created   int64         `json:"created"`
-	ExpiresAt int64         `json:"expires_at"`
-	Filename  string        `json:"filename"`
-	ID        string        `json:"id"`
-	Links     *FileLinkList `json:"links"`
-	Object    string        `json:"object"`
-	Purpose   FilePurpose   `json:"purpose"`
-	Size      int64         `json:"size"`
-	Type      string        `json:"type"`
-	URL       string        `json:"url"`
-}
-
-// FileList is a list of files as retrieved from a list endpoint.
-type FileList struct {
-	APIResource
-	ListMeta
-	Data []*File `json:"data"`
+	// Optional parameters that automatically create a [file link](https://docs.stripe.com/api#file_links) for the newly created file.
+	FileLinkData *FileFileLinkDataParams `form:"file_link_data" json:"file_link_data,omitempty"`
+	// The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file.
+	Purpose *string `form:"purpose" json:"purpose,omitempty"`
 }
 
 // GetBody gets an appropriate multipart form payload to use in a request body
 // to create a new file.
-func (f *FileParams) GetBody() (*bytes.Buffer, string, error) {
+func (p *FileParams) GetBody() (*bytes.Buffer, string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	if f.Purpose != nil {
-		err := writer.WriteField("purpose", StringValue(f.Purpose))
+	if p.Purpose != nil {
+		err := writer.WriteField("purpose", StringValue(p.Purpose))
 		if err != nil {
 			return nil, "", err
 		}
 	}
 
-	if f.FileReader != nil && f.Filename != nil {
-		part, err := writer.CreateFormFile("file", filepath.Base(StringValue(f.Filename)))
+	if p.FileReader != nil && p.Filename != nil {
+		part, err := writer.CreateFormFile(
+			"file", filepath.Base(StringValue(p.Filename)))
+
 		if err != nil {
 			return nil, "", err
 		}
 
-		_, err = io.Copy(part, f.FileReader)
+		_, err = io.Copy(part, p.FileReader)
 		if err != nil {
 			return nil, "", err
 		}
 	}
 
-	if f.FileLinkData != nil {
+	if p.FileLinkData != nil {
 		values := &form.Values{}
-		form.AppendToPrefixed(values, f.FileLinkData, []string{"file_link_data"})
+		form.AppendToPrefixed(values, p.FileLinkData, []string{"file_link_data"})
 
 		params, err := url.ParseQuery(values.Encode())
 		if err != nil {
@@ -134,6 +162,170 @@ func (f *FileParams) GetBody() (*bytes.Buffer, string, error) {
 	}
 
 	return body, writer.Boundary(), nil
+}
+
+// AddExpand appends a new field to expand.
+func (p *FileParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Optional parameters that automatically create a [file link](https://docs.stripe.com/api#file_links) for the newly created file.
+type FileCreateFileLinkDataParams struct {
+	Params `form:"*"`
+	// Set this to `true` to create a file link for the newly created file. Creating a link is only possible when the file's `purpose` is one of the following: `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `issuing_regulatory_reporting`, `pci_document`, `tax_document_user_upload`, `terminal_android_apk`, or `terminal_reader_splashscreen`.
+	Create *bool `form:"create" json:"create"`
+	// The link isn't available after this future timestamp.
+	ExpiresAt *int64 `form:"expires_at" json:"expires_at,omitempty"`
+	// Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+	Metadata    map[string]string                        `form:"metadata" json:"metadata,omitempty"`
+	UnsetFields []FileCreateFileLinkDataParamsUnsetField `form:"-" json:"-"`
+}
+
+// FileCreateFileLinkDataParamsUnsetField is the list of fields that can be cleared/unset on FileCreateFileLinkDataParams.
+type FileCreateFileLinkDataParamsUnsetField string
+
+const (
+	FileCreateFileLinkDataParamsUnsetFieldMetadata FileCreateFileLinkDataParamsUnsetField = "metadata"
+)
+
+// AddUnsetField adds a field to the list of fields to clear/unset on this params object.
+func (p *FileCreateFileLinkDataParams) AddUnsetField(field FileCreateFileLinkDataParamsUnsetField) {
+	p.UnsetFields = append(p.UnsetFields, field)
+}
+
+// AddMetadata adds a new key-value pair to the Metadata.
+func (p *FileCreateFileLinkDataParams) AddMetadata(key string, value string) {
+	if p.Metadata == nil {
+		p.Metadata = make(map[string]string)
+	}
+
+	p.Metadata[key] = value
+}
+
+// To upload a file to Stripe, you need to send a request of type multipart/form-data. Include the file you want to upload in the request, and the parameters for creating a file.
+//
+// All of Stripe's officially supported Client libraries support sending multipart/form-data.
+type FileCreateParams struct {
+	Params `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+	// FileReader is a reader with the contents of the file that should be uploaded.
+	FileReader io.Reader
+
+	// Filename is just the name of the file without path information.
+	Filename *string
+	// Optional parameters that automatically create a [file link](https://docs.stripe.com/api#file_links) for the newly created file.
+	FileLinkData *FileCreateFileLinkDataParams `form:"file_link_data" json:"file_link_data,omitempty"`
+	// The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file.
+	Purpose *string `form:"purpose" json:"purpose"`
+}
+
+// GetBody gets an appropriate multipart form payload to use in a request body
+// to create a new file.
+func (p *FileCreateParams) GetBody() (*bytes.Buffer, string, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	if p.Purpose != nil {
+		err := writer.WriteField("purpose", StringValue(p.Purpose))
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	if p.FileReader != nil && p.Filename != nil {
+		part, err := writer.CreateFormFile(
+			"file", filepath.Base(StringValue(p.Filename)))
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		_, err = io.Copy(part, p.FileReader)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	if p.FileLinkData != nil {
+		values := &form.Values{}
+		form.AppendToPrefixed(values, p.FileLinkData, []string{"file_link_data"})
+
+		params, err := url.ParseQuery(values.Encode())
+		if err != nil {
+			return nil, "", err
+		}
+		for key, values := range params {
+			err := writer.WriteField(key, values[0])
+			if err != nil {
+				return nil, "", err
+			}
+		}
+	}
+
+	err := writer.Close()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return body, writer.Boundary(), nil
+}
+
+// AddExpand appends a new field to expand.
+func (p *FileCreateParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Retrieves the details of an existing file object. After you supply a unique file ID, Stripe returns the corresponding file object. Learn how to [access file contents](https://docs.stripe.com/docs/file-upload#download-file-contents).
+type FileRetrieveParams struct {
+	Params `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *FileRetrieveParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// This object represents files hosted on Stripe's servers. You can upload
+// files with the [create file](https://docs.stripe.com/api#create_file) request
+// (for example, when uploading dispute evidence). Stripe also
+// creates files independently (for example, the results of a [Sigma scheduled
+// query](https://docs.stripe.com/api#scheduled_queries)).
+//
+// Related guide: [File upload guide](https://docs.stripe.com/file-upload)
+type File struct {
+	APIResource
+	// Time at which the object was created. Measured in seconds since the Unix epoch.
+	Created int64 `json:"created"`
+	// The file expires and isn't available at this time in epoch seconds.
+	ExpiresAt int64 `json:"expires_at"`
+	// The suitable name for saving the file to a filesystem.
+	Filename string `json:"filename"`
+	// Unique identifier for the object.
+	ID string `json:"id"`
+	// A list of [file links](https://docs.stripe.com/api#file_links) that point at this file.
+	Links *FileLinkList `json:"links,omitempty"`
+	// String representing the object's type. Objects of the same type share the same value.
+	Object string `json:"object"`
+	// The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file.
+	Purpose FilePurpose `json:"purpose"`
+	// The size of the file object in bytes.
+	Size int64 `json:"size"`
+	// A suitable title for the document.
+	Title string `json:"title"`
+	// The returned file type (for example, `csv`, `pdf`, `jpg`, or `png`).
+	Type string `json:"type"`
+	// Use your live secret API key to download the file from this URL.
+	URL string `json:"url"`
+}
+
+// FileList is a list of Files as retrieved from a list endpoint.
+type FileList struct {
+	APIResource
+	ListMeta
+	Data []*File `json:"data"`
 }
 
 // UnmarshalJSON handles deserialization of a File.

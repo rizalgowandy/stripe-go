@@ -1,150 +1,148 @@
-// Package paymentsource provides the /sources APIs
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package paymentsource provides the /v1/customers/{customer}/sources APIs
 package paymentsource
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /sources APIs.
+// Client is used to invoke /v1/customers/{customer}/sources APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// New creates a new source for a customer.
-func New(params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// When you create a new credit card, you must specify a customer or recipient on which to create it.
+//
+// If the card's owner has no default card, then the new card will become the default.
+// However, if the owner already has a default, then it will not change.
+// To change the default, you should [update the customer](https://docs.stripe.com/api/customers/update) to have a new default_source.
+func New(params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	return getC().New(params)
 }
 
-// New creates a new source for a customer.
-func (s Client) New(params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// When you create a new credit card, you must specify a customer or recipient on which to create it.
+//
+// If the card's owner has no default card, then the new card will become the default.
+// However, if the owner already has a default, then it will not change.
+// To change the default, you should [update the customer](https://docs.stripe.com/api/customers/update) to have a new default_source.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) New(params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
-
 	if params.Customer == nil {
-		return nil, errors.New("Invalid source params: customer needs to be set")
+		return nil, fmt.Errorf("invalid source params: customer needs to be set")
 	}
-
-	path := stripe.FormatURLPath("/v1/customers/%s/sources", stripe.StringValue(params.Customer))
-	source := &stripe.PaymentSource{}
-	err := s.B.Call(http.MethodPost, path, s.Key, params, source)
-	return source, err
+	path := stripe.FormatURLPath(
+		"/v1/customers/%s/sources", stripe.StringValue(params.Customer))
+	paymentsource := &stripe.PaymentSource{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, paymentsource)
+	return paymentsource, err
 }
 
-// Get returns the details of a source.
-func Get(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Retrieve a specified source for a given customer.
+func Get(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of a source.
-func (s Client) Get(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Retrieve a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Get(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
-
 	if params.Customer == nil {
-		return nil, errors.New("Invalid source params: customer needs to be set")
+		return nil, fmt.Errorf("invalid source params: customer needs to be set")
 	}
-
-	path := stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
-	source := &stripe.PaymentSource{}
-	err := s.B.Call(http.MethodGet, path, s.Key, params, source)
-	return source, err
+	path := stripe.FormatURLPath(
+		"/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
+	paymentsource := &stripe.PaymentSource{}
+	err := c.B.Call(http.MethodGet, path, c.Key, params, paymentsource)
+	return paymentsource, err
 }
 
-// Update updates a source's properties.
-func Update(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Update a specified source for a given customer.
+func Update(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	return getC().Update(id, params)
 }
 
-// Update updates a source's properties.
-func (s Client) Update(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Update a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Update(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
-
 	if params.Customer == nil {
-		return nil, errors.New("Invalid source params: customer needs to be set")
+		return nil, fmt.Errorf("invalid source params: customer needs to be set")
 	}
-
-	path := stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
-	source := &stripe.PaymentSource{}
-	err := s.B.Call(http.MethodPost, path, s.Key, params, source)
-	return source, err
+	path := stripe.FormatURLPath(
+		"/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
+	paymentsource := &stripe.PaymentSource{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, paymentsource)
+	return paymentsource, err
 }
 
-// Del removes a source.
-func Del(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Delete a specified source for a given customer.
+func Del(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	return getC().Del(id, params)
 }
 
-// Del removes a source.
-func (s Client) Del(id string, params *stripe.CustomerSourceParams) (*stripe.PaymentSource, error) {
+// Delete a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Del(id string, params *stripe.PaymentSourceParams) (*stripe.PaymentSource, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
-
 	if params.Customer == nil {
-		return nil, errors.New("Invalid source params: customer needs to be set")
+		return nil, fmt.Errorf("invalid source params: customer needs to be set")
 	}
-
-	source := &stripe.PaymentSource{}
-	path := stripe.FormatURLPath("/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
-	err := s.B.Call(http.MethodDelete, path, s.Key, params, source)
-	return source, err
-}
-
-// List returns a list of sources.
-func List(params *stripe.SourceListParams) *Iter {
-	return getC().List(params)
-}
-
-// List returns a list of sources.
-func (s Client) List(listParams *stripe.SourceListParams) *Iter {
-	var outerErr error
-	var path string
-
-	if listParams == nil {
-		outerErr = errors.New("params should not be nil")
-	} else if listParams.Customer == nil {
-		outerErr = errors.New("Invalid source params: customer needs to be set")
-	} else {
-		path = stripe.FormatURLPath("/v1/customers/%s/sources",
-			stripe.StringValue(listParams.Customer))
-	}
-
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.SourceList{}
-
-		if outerErr != nil {
-			return nil, list, outerErr
-		}
-
-		err := s.B.CallRaw(http.MethodGet, path, s.Key, b, p, list)
-
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
-
-		return ret, list, err
-	})}
+	path := stripe.FormatURLPath(
+		"/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
+	paymentsource := &stripe.PaymentSource{}
+	err := c.B.Call(http.MethodDelete, path, c.Key, params, paymentsource)
+	return paymentsource, err
 }
 
 // Verify verifies a source which is used for bank accounts.
-func Verify(id string, params *stripe.SourceVerifyParams) (*stripe.PaymentSource, error) {
+// Verify a specified bank account for a given customer.
+func Verify(id string, params *stripe.PaymentSourceVerifyParams) (*stripe.PaymentSource, error) {
 	return getC().Verify(id, params)
 }
 
 // Verify verifies a source which is used for bank accounts.
-func (s Client) Verify(id string, params *stripe.SourceVerifyParams) (*stripe.PaymentSource, error) {
+// Verify a specified bank account for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Verify(id string, params *stripe.PaymentSourceVerifyParams) (*stripe.PaymentSource, error) {
 	if params == nil {
-		return nil, errors.New("params should not be nil")
+		return nil, fmt.Errorf("params should not be nil")
 	}
 
 	var path string
@@ -154,29 +152,71 @@ func (s Client) Verify(id string, params *stripe.SourceVerifyParams) (*stripe.Pa
 	} else if len(params.Values) > 0 {
 		path = stripe.FormatURLPath("/v1/sources/%s/verify", id)
 	} else {
-		return nil, errors.New("Only customer bank accounts or sources can be verified in this manner")
+		return nil, fmt.Errorf("only customer bank accounts or sources can be verified in this manner")
 	}
 
 	source := &stripe.PaymentSource{}
-	err := s.B.Call(http.MethodPost, path, s.Key, params, source)
+	err := c.B.Call(http.MethodPost, path, c.Key, params, source)
 	return source, err
 }
 
-// Iter is an iterator for sources.
+// List sources for a specified customer.
+func List(params *stripe.PaymentSourceListParams) *Iter {
+	return getC().List(params)
+}
+
+// List sources for a specified customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) List(listParams *stripe.PaymentSourceListParams) *Iter {
+	var outerErr error
+	var path string
+
+	if listParams == nil {
+		outerErr = fmt.Errorf("params should not be nil")
+	} else if listParams.Customer == nil {
+		outerErr = fmt.Errorf("invalid source params: customer needs to be set")
+	} else {
+		path = stripe.FormatURLPath("/v1/customers/%s/sources",
+			stripe.StringValue(listParams.Customer))
+	}
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.PaymentSourceList{}
+
+			if outerErr != nil {
+				return nil, list, outerErr
+			}
+
+			err := c.B.CallRaw(http.MethodGet, path, c.Key, []byte(b.Encode()), p, list)
+
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
+
+			return ret, list, err
+		}),
+	}
+}
+
+// Iter is an iterator for payment sources.
 type Iter struct {
 	*stripe.Iter
 }
 
-// PaymentSource returns the source which the iterator is currently pointing to.
+// PaymentSource returns the payment source which the iterator is currently pointing to.
 func (i *Iter) PaymentSource() *stripe.PaymentSource {
 	return i.Current().(*stripe.PaymentSource)
 }
 
-// SourceList returns the current list object which the iterator is
+// PaymentSourceList returns the current list object which the iterator is
 // currently using. List objects will change as new API calls are made to
 // continue pagination.
-func (i *Iter) SourceList() *stripe.SourceList {
-	return i.List().(*stripe.SourceList)
+func (i *Iter) PaymentSourceList() *stripe.PaymentSourceList {
+	return i.List().(*stripe.PaymentSourceList)
 }
 
 func getC() Client {

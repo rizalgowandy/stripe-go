@@ -1,33 +1,38 @@
-package account
+package account_test
 
 import (
 	"testing"
 
 	assert "github.com/stretchr/testify/require"
-	stripe "github.com/stripe/stripe-go/v72"
-	_ "github.com/stripe/stripe-go/v72/testing"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/client"
+	. "github.com/stripe/stripe-go/v87/testing"
 )
 
 func TestAccountDel(t *testing.T) {
-	account, err := Del("acct_123", nil)
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.Del("acct_123", nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, account)
 }
 
 func TestAccountGet(t *testing.T) {
-	account, err := Get()
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.Get()
 	assert.Nil(t, err)
 	assert.NotNil(t, account)
 }
 
 func TestAccountGetByID(t *testing.T) {
-	account, err := GetByID("acct_123", nil)
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.GetByID("acct_123", nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, account)
 }
 
 func TestAccountList(t *testing.T) {
-	i := List(&stripe.AccountListParams{})
+	sc := client.New(TestAPIKey, nil)
+	i := sc.Accounts.List(&stripe.AccountListParams{})
 
 	// Verify that we can get at least one account
 	assert.True(t, i.Next())
@@ -37,7 +42,8 @@ func TestAccountList(t *testing.T) {
 }
 
 func TestAccountNew(t *testing.T) {
-	account, err := New(&stripe.AccountParams{
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.New(&stripe.AccountParams{
 		BusinessProfile: &stripe.AccountBusinessProfileParams{
 			Name:         stripe.String("name"),
 			SupportEmail: stripe.String("foo@bar.com"),
@@ -78,7 +84,7 @@ func TestAccountNew(t *testing.T) {
 				Logo: stripe.String("file_234"),
 			},
 			CardPayments: &stripe.AccountSettingsCardPaymentsParams{
-				DeclineOn: &stripe.AccountDeclineSettingsParams{
+				DeclineOn: &stripe.AccountSettingsCardPaymentsDeclineOnParams{
 					AVSFailure: stripe.Bool(true),
 					CVCFailure: stripe.Bool(true),
 				},
@@ -89,9 +95,9 @@ func TestAccountNew(t *testing.T) {
 			},
 			Payouts: &stripe.AccountSettingsPayoutsParams{
 				DebitNegativeBalances: stripe.Bool(true),
-				Schedule: &stripe.PayoutScheduleParams{
+				Schedule: &stripe.AccountSettingsPayoutsScheduleParams{
 					DelayDaysMinimum: stripe.Bool(true),
-					Interval:         stripe.String(string(stripe.PayoutIntervalManual)),
+					Interval:         stripe.String(string(stripe.AccountSettingsPayoutsScheduleIntervalManual)),
 				},
 				StatementDescriptor: stripe.String("payout_descriptor"),
 			},
@@ -103,17 +109,19 @@ func TestAccountNew(t *testing.T) {
 }
 
 func TestAccountReject(t *testing.T) {
-	account, err := Reject("acct_123", &stripe.AccountRejectParams{
-		Reason: stripe.String(string(stripe.AccountRejectReasonFraud)),
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.Reject("acct_123", &stripe.AccountRejectParams{
+		Reason: stripe.String("fraud_other"),
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, account)
 }
 
 func TestAccountUpdate(t *testing.T) {
-	account, err := Update("acct_123", &stripe.AccountParams{
+	sc := client.New(TestAPIKey, nil)
+	account, err := sc.Accounts.Update("acct_123", &stripe.AccountParams{
 		Company: &stripe.AccountCompanyParams{
-			Address: &stripe.AccountAddressParams{
+			Address: &stripe.AddressParams{
 				Country:    stripe.String("CA"),
 				City:       stripe.String("Montreal"),
 				PostalCode: stripe.String("H2Y 1C6"),

@@ -6,19 +6,46 @@
 
 package stripe
 
-// LoginLinkParams is the set of parameters that can be used when creating a login_link.
-// For more details see https://stripe.com/docs/api#create_login_link.
+// Creates a login link for a connected account to access the Express Dashboard.
+//
+// You can only create login links for accounts that use the [Express Dashboard](https://docs.stripe.com/connect/express-dashboard) and are connected to your platform.
 type LoginLinkParams struct {
-	Params      `form:"*"`
-	Account     *string `form:"-"` // Included in URL
-	RedirectURL *string `form:"redirect_url"`
+	Params `form:"*"`
+	// Unique identifier for the object.
+	Account *string `form:"-"` // Included in URL
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
 }
 
-// LoginLink is the resource representing a login link for Express accounts.
-// For more details see https://stripe.com/docs/api#login_link_object
+// AddExpand appends a new field to expand.
+func (p *LoginLinkParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Creates a login link for a connected account to access the Express Dashboard.
+//
+// You can only create login links for accounts that use the [Express Dashboard](https://docs.stripe.com/connect/express-dashboard) and are connected to your platform.
+type LoginLinkCreateParams struct {
+	Params `form:"*"`
+	// Unique identifier for the object.
+	Account *string `form:"-"` // Included in URL
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *LoginLinkCreateParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Login Links are single-use URLs that takes an Express account to the login page for their Stripe dashboard.
+// A Login Link differs from an [Account Link](https://docs.stripe.com/api/account_links) in that it takes the user directly to their [Express dashboard for the specified account](https://docs.stripe.com/connect/integrate-express-dashboard#create-login-link)
 type LoginLink struct {
 	APIResource
-	Created int64  `json:"created"`
-	Object  string `json:"object"`
-	URL     string `json:"url"`
+	// Time at which the object was created. Measured in seconds since the Unix epoch.
+	Created int64 `json:"created"`
+	// String representing the object's type. Objects of the same type share the same value.
+	Object string `json:"object"`
+	// The URL for the login link.
+	URL string `json:"url"`
 }

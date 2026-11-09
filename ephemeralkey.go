@@ -1,31 +1,85 @@
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
 package stripe
 
 import "encoding/json"
 
-// EphemeralKeyParams is the set of parameters that can be used when creating
-// an ephemeral key.
+// Invalidates a short-lived API key for a given resource.
 type EphemeralKeyParams struct {
-	Params        `form:"*"`
-	Customer      *string `form:"customer"`
-	IssuingCard   *string `form:"issuing_card"`
-	StripeVersion *string `form:"-"` // This goes in the `Stripe-Version` header
+	Params `form:"*"`
+	// The ID of the Customer you'd like to modify using the resulting ephemeral key.
+	Customer *string `form:"customer" json:"customer,omitempty"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+	// The ID of the Issuing Card you'd like to access using the resulting ephemeral key.
+	IssuingCard *string `form:"issuing_card" json:"issuing_card,omitempty"`
+	// A single-use token, created by Stripe.js, used for creating ephemeral keys for Issuing Cards without exchanging sensitive information.
+	Nonce *string `form:"nonce" json:"nonce,omitempty"`
+	// The ID of the Identity VerificationSession you'd like to access using the resulting ephemeral key
+	VerificationSession *string `form:"verification_session" json:"verification_session,omitempty"`
+	StripeVersion       *string `form:"-"` // This goes in the `Stripe-Version` header
 }
 
-// EphemeralKey is the resource representing a Stripe ephemeral key. This is used by Mobile SDKs
-// to for example manage a Customer's payment methods.
+// AddExpand appends a new field to expand.
+func (p *EphemeralKeyParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Invalidates a short-lived API key for a given resource.
+type EphemeralKeyDeleteParams struct {
+	Params `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *EphemeralKeyDeleteParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Creates a short-lived API key for a given resource.
+type EphemeralKeyCreateParams struct {
+	Params `form:"*"`
+	// The ID of the Customer you'd like to modify using the resulting ephemeral key.
+	Customer *string `form:"customer" json:"customer,omitempty"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+	// The ID of the Issuing Card you'd like to access using the resulting ephemeral key.
+	IssuingCard *string `form:"issuing_card" json:"issuing_card,omitempty"`
+	// A single-use token, created by Stripe.js, used for creating ephemeral keys for Issuing Cards without exchanging sensitive information.
+	Nonce *string `form:"nonce" json:"nonce,omitempty"`
+	// The ID of the Identity VerificationSession you'd like to access using the resulting ephemeral key
+	VerificationSession *string `form:"verification_session" json:"verification_session,omitempty"`
+	StripeVersion       *string `form:"-"` // This goes in the `Stripe-Version` header
+}
+
+// AddExpand appends a new field to expand.
+func (p *EphemeralKeyCreateParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Ephemeral keys give the SDKs (like Stripe's mobile SDKs and Issuing Elements) temporary, scoped access to a specific
+// resource, such as a Customer, Issuing Card, or Identity VerificationSession, without exposing your secret API key.
+//
+// Related guides: [Using Issuing Elements](https://docs.stripe.com/issuing/elements).
 type EphemeralKey struct {
 	APIResource
-
-	AssociatedObjects []struct {
-		ID   string `json:"id"`
-		Type string `json:"type"`
-	} `json:"associated_objects"`
-
-	Created  int64  `json:"created"`
-	Expires  int64  `json:"expires"`
-	ID       string `json:"id"`
-	Livemode bool   `json:"livemode"`
-
+	// Time at which the object was created. Measured in seconds since the Unix epoch.
+	Created int64 `json:"created"`
+	// Time at which the key will expire. Measured in seconds since the Unix epoch.
+	Expires int64 `json:"expires"`
+	// Unique identifier for the object.
+	ID string `json:"id"`
+	// If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+	Livemode bool `json:"livemode"`
+	// String representing the object's type. Objects of the same type share the same value.
+	Object string `json:"object"`
+	// The key's secret. You can use this value to make authorized requests to the Stripe API.
+	Secret string `json:"secret,omitempty"`
 	// RawJSON is provided so that it may be passed back to the frontend
 	// unchanged.  Ephemeral keys are issued on behalf of another client which
 	// may be running a different version of the bindings and thus expect a
@@ -38,6 +92,7 @@ type EphemeralKey struct {
 // UnmarshalJSON handles deserialization of an EphemeralKey.
 // This custom unmarshaling is needed because we need to store the
 // raw JSON on the object so it may be passed back to the frontend.
+
 func (e *EphemeralKey) UnmarshalJSON(data []byte) error {
 	type ephemeralKey EphemeralKey
 	var ee ephemeralKey

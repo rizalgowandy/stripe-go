@@ -1,12 +1,18 @@
-// Package sourcetransaction provides the /source/transactions APIs.
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package sourcetransaction provides the sourcetransaction related APIs
 package sourcetransaction
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
 // Client is used to invoke /sources/:source_id/transactions APIs.
@@ -15,39 +21,40 @@ type Client struct {
 	Key string
 }
 
-// List returns a list of source transactions.
+// List source transactions for a given source.
 func List(params *stripe.SourceTransactionListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of source transactions.
+// List source transactions for a given source.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) List(listParams *stripe.SourceTransactionListParams) *Iter {
-	var outerErr error
-	var path string
-
 	if listParams == nil || listParams.Source == nil {
-		outerErr = errors.New("Invalid source transaction params: Source needs to be set")
-	} else {
-		path = stripe.FormatURLPath("/v1/sources/%s/source_transactions",
-			stripe.StringValue(listParams.Source))
+		return &Iter{
+			Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+				list := &stripe.SourceTransactionList{}
+				return nil, list, fmt.Errorf("invalid source transaction params: Source needs to be set")
+			}),
+		}
 	}
+	path := stripe.FormatURLPath(
+		"/v1/sources/%s/source_transactions", stripe.StringValue(listParams.Source))
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.SourceTransactionList{}
+			err := c.B.CallRaw(http.MethodGet, path, c.Key, []byte(b.Encode()), p, list)
 
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.SourceTransactionList{}
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		if outerErr != nil {
-			return nil, list, outerErr
-		}
-
-		err := c.B.CallRaw(http.MethodGet, path, c.Key, b, p, list)
-
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
-
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
 // Iter is an iterator for source transactions.

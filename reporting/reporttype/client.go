@@ -1,69 +1,92 @@
-// Package reporttype provides API functions related to report types.
 //
-// For more details, see: https://stripe.com/docs/api/go#reporting_report_type
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package reporttype provides the /v1/reporting/report_types APIs
 package reporttype
 
 import (
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /reporting/report_types APIs.
+// Client is used to invoke /v1/reporting/report_types APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// Get returns the details of a report type.
-func Get(id string, params *stripe.ReportTypeParams) (*stripe.ReportType, error) {
+// Retrieves the details of a Report Type. (Certain report types require a [live-mode API key](https://stripe.com/docs/keys#test-live-modes).)
+func Get(id string, params *stripe.ReportingReportTypeParams) (*stripe.ReportingReportType, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of a report type.
-func (c Client) Get(id string, params *stripe.ReportTypeParams) (*stripe.ReportType, error) {
+// Retrieves the details of a Report Type. (Certain report types require a [live-mode API key](https://stripe.com/docs/keys#test-live-modes).)
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Get(id string, params *stripe.ReportingReportTypeParams) (*stripe.ReportingReportType, error) {
 	path := stripe.FormatURLPath("/v1/reporting/report_types/%s", id)
-	reporttype := &stripe.ReportType{}
+	reporttype := &stripe.ReportingReportType{}
 	err := c.B.Call(http.MethodGet, path, c.Key, params, reporttype)
 	return reporttype, err
 }
 
-// List returns a list of report types.
-func List(params *stripe.ReportTypeListParams) *Iter {
+// Returns a full list of Report Types.
+func List(params *stripe.ReportingReportTypeListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of report types.
-func (c Client) List(listParams *stripe.ReportTypeListParams) *Iter {
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.ReportTypeList{}
-		err := c.B.CallRaw(http.MethodGet, "/v1/reporting/report_types", c.Key, b, p, list)
+// Returns a full list of Report Types.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) List(listParams *stripe.ReportingReportTypeListParams) *Iter {
+	if listParams == nil {
+		listParams = &stripe.ReportingReportTypeListParams{}
+	}
+	p := listParams.GetParams()
+	queryParams := &form.Values{}
+	form.AppendTo(queryParams, listParams)
+	return &Iter{
+		Iter: stripe.GetIter(nil, func(_ *stripe.Params, _ *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.ReportingReportTypeList{}
+			err := c.B.CallRaw(http.MethodGet, "/v1/reporting/report_types", c.Key, []byte(queryParams.Encode()), p, list)
 
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
-// Iter is an iterator for report types.
+// Iter is an iterator for reporting report types.
 type Iter struct {
 	*stripe.Iter
 }
 
-// ReportType returns the report type which the iterator is currently pointing to.
-func (i *Iter) ReportType() *stripe.ReportType {
-	return i.Current().(*stripe.ReportType)
+// ReportingReportType returns the reporting report type which the iterator is currently pointing to.
+func (i *Iter) ReportingReportType() *stripe.ReportingReportType {
+	return i.Current().(*stripe.ReportingReportType)
 }
 
-// ReportTypeList returns the current list object which the iterator is
+// ReportingReportTypeList returns the current list object which the iterator is
 // currently using. List objects will change as new API calls are made to
 // continue pagination.
-func (i *Iter) ReportTypeList() *stripe.ReportTypeList {
-	return i.List().(*stripe.ReportTypeList)
+func (i *Iter) ReportingReportTypeList() *stripe.ReportingReportTypeList {
+	return i.List().(*stripe.ReportingReportTypeList)
 }
 
 func getC() Client {

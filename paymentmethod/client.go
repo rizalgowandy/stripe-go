@@ -1,109 +1,173 @@
-// Package paymentmethod provides the /payment_methods APIs
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package paymentmethod provides the /v1/payment_methods APIs
 package paymentmethod
 
 import (
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke pms APIs.
+// Client is used to invoke /v1/payment_methods APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// Attach attaches a PaymentMethod.
-func Attach(id string, params *stripe.PaymentMethodAttachParams) (*stripe.PaymentMethod, error) {
-	return getC().Attach(id, params)
-}
-
-// Attach attaches a PaymentMethod.
-func (c Client) Attach(id string, params *stripe.PaymentMethodAttachParams) (*stripe.PaymentMethod, error) {
-	path := stripe.FormatURLPath("/v1/payment_methods/%s/attach", id)
-	pm := &stripe.PaymentMethod{}
-	err := c.B.Call(http.MethodPost, path, c.Key, params, pm)
-	return pm, err
-}
-
-// Detach detaches a PaymentMethod.
-func Detach(id string, params *stripe.PaymentMethodDetachParams) (*stripe.PaymentMethod, error) {
-	return getC().Detach(id, params)
-}
-
-// Detach detaches a PaymentMethod.
-func (c Client) Detach(id string, params *stripe.PaymentMethodDetachParams) (*stripe.PaymentMethod, error) {
-	path := stripe.FormatURLPath("/v1/payment_methods/%s/detach", id)
-	pm := &stripe.PaymentMethod{}
-	err := c.B.Call(http.MethodPost, path, c.Key, params, pm)
-	return pm, err
-}
-
-// Get returns the details of a PaymentMethod.
-func Get(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
-	return getC().Get(id, params)
-}
-
-// Get returns the details of a PaymentMethod.
-func (c Client) Get(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
-	path := stripe.FormatURLPath("/v1/payment_methods/%s", id)
-	fee := &stripe.PaymentMethod{}
-	err := c.B.Call(http.MethodGet, path, c.Key, params, fee)
-	return fee, err
-}
-
-// List returns a list of PaymentMethods.
-func List(params *stripe.PaymentMethodListParams) *Iter {
-	return getC().List(params)
-}
-
-// List returns a list of PaymentMethods.
-func (c Client) List(listParams *stripe.PaymentMethodListParams) *Iter {
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.PaymentMethodList{}
-		err := c.B.CallRaw(http.MethodGet, "/v1/payment_methods", c.Key, b, p, list)
-
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
-
-		return ret, list, err
-	})}
-}
-
-// New creates a new PaymentMethod.
+// Creates a PaymentMethod object. Read the [Stripe.js reference](https://docs.stripe.com/docs/stripe-js/reference#stripe-create-payment-method) to learn how to create PaymentMethods via Stripe.js.
+//
+// Instead of creating a PaymentMethod directly, we recommend using the [PaymentIntents API to accept a payment immediately or the <a href="/docs/payments/save-and-reuse">SetupIntent](https://docs.stripe.com/docs/payments/accept-a-payment) API to collect payment method details ahead of a future payment.
 func New(params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
 	return getC().New(params)
 }
 
-// New creates a new PaymentMethod.
+// Creates a PaymentMethod object. Read the [Stripe.js reference](https://docs.stripe.com/docs/stripe-js/reference#stripe-create-payment-method) to learn how to create PaymentMethods via Stripe.js.
+//
+// Instead of creating a PaymentMethod directly, we recommend using the [PaymentIntents API to accept a payment immediately or the <a href="/docs/payments/save-and-reuse">SetupIntent](https://docs.stripe.com/docs/payments/accept-a-payment) API to collect payment method details ahead of a future payment.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) New(params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
-	pm := &stripe.PaymentMethod{}
-	err := c.B.Call(http.MethodPost, "/v1/payment_methods", c.Key, params, pm)
-	return pm, err
+	paymentmethod := &stripe.PaymentMethod{}
+	err := c.B.Call(
+		http.MethodPost, "/v1/payment_methods", c.Key, params, paymentmethod)
+	return paymentmethod, err
 }
 
-// Update updates a PaymentMethod.
+// Retrieves a PaymentMethod object attached to the StripeAccount. To retrieve a payment method attached to a Customer, you should use [Retrieve a Customer's PaymentMethods](https://docs.stripe.com/docs/api/payment_methods/customer)
+func Get(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
+	return getC().Get(id, params)
+}
+
+// Retrieves a PaymentMethod object attached to the StripeAccount. To retrieve a payment method attached to a Customer, you should use [Retrieve a Customer's PaymentMethods](https://docs.stripe.com/docs/api/payment_methods/customer)
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Get(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
+	path := stripe.FormatURLPath("/v1/payment_methods/%s", id)
+	paymentmethod := &stripe.PaymentMethod{}
+	err := c.B.Call(http.MethodGet, path, c.Key, params, paymentmethod)
+	return paymentmethod, err
+}
+
+// Updates a PaymentMethod object. A PaymentMethod must be attached to a customer to be updated.
 func Update(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
 	return getC().Update(id, params)
 }
 
-// Update updates a PaymentMethod.
+// Updates a PaymentMethod object. A PaymentMethod must be attached to a customer to be updated.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Update(id string, params *stripe.PaymentMethodParams) (*stripe.PaymentMethod, error) {
 	path := stripe.FormatURLPath("/v1/payment_methods/%s", id)
-	pm := &stripe.PaymentMethod{}
-	err := c.B.Call(http.MethodPost, path, c.Key, params, pm)
-	return pm, err
+	paymentmethod := &stripe.PaymentMethod{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, paymentmethod)
+	return paymentmethod, err
 }
 
-// Iter is an iterator for PaymentMethods.
+// Attaches a PaymentMethod object to a Customer.
+//
+// To attach a new PaymentMethod to a customer for future payments, we recommend you use a [SetupIntent](https://docs.stripe.com/docs/api/setup_intents)
+// or a PaymentIntent with [setup_future_usage](https://docs.stripe.com/docs/api/payment_intents/create#create_payment_intent-setup_future_usage).
+// These approaches will perform any necessary steps to set up the PaymentMethod for future payments. Using the /v1/payment_methods/:id/attach
+// endpoint without first using a SetupIntent or PaymentIntent with setup_future_usage does not optimize the PaymentMethod for
+// future use, which makes later declines and payment friction more likely.
+// See [Optimizing cards for future payments](https://docs.stripe.com/docs/payments/payment-intents#future-usage) for more information about setting up
+// future payments.
+//
+// To use this PaymentMethod as the default for invoice or subscription payments,
+// set [invoice_settings.default_payment_method](https://docs.stripe.com/docs/api/customers/update#update_customer-invoice_settings-default_payment_method),
+// on the Customer to the PaymentMethod's ID.
+func Attach(id string, params *stripe.PaymentMethodAttachParams) (*stripe.PaymentMethod, error) {
+	return getC().Attach(id, params)
+}
+
+// Attaches a PaymentMethod object to a Customer.
+//
+// To attach a new PaymentMethod to a customer for future payments, we recommend you use a [SetupIntent](https://docs.stripe.com/docs/api/setup_intents)
+// or a PaymentIntent with [setup_future_usage](https://docs.stripe.com/docs/api/payment_intents/create#create_payment_intent-setup_future_usage).
+// These approaches will perform any necessary steps to set up the PaymentMethod for future payments. Using the /v1/payment_methods/:id/attach
+// endpoint without first using a SetupIntent or PaymentIntent with setup_future_usage does not optimize the PaymentMethod for
+// future use, which makes later declines and payment friction more likely.
+// See [Optimizing cards for future payments](https://docs.stripe.com/docs/payments/payment-intents#future-usage) for more information about setting up
+// future payments.
+//
+// To use this PaymentMethod as the default for invoice or subscription payments,
+// set [invoice_settings.default_payment_method](https://docs.stripe.com/docs/api/customers/update#update_customer-invoice_settings-default_payment_method),
+// on the Customer to the PaymentMethod's ID.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Attach(id string, params *stripe.PaymentMethodAttachParams) (*stripe.PaymentMethod, error) {
+	path := stripe.FormatURLPath("/v1/payment_methods/%s/attach", id)
+	paymentmethod := &stripe.PaymentMethod{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, paymentmethod)
+	return paymentmethod, err
+}
+
+// Detaches a PaymentMethod object from a Customer. Detachment is permanent and irreversible — once detached, a PaymentMethod can no longer be used for payments or re-attached to a Customer.
+func Detach(id string, params *stripe.PaymentMethodDetachParams) (*stripe.PaymentMethod, error) {
+	return getC().Detach(id, params)
+}
+
+// Detaches a PaymentMethod object from a Customer. Detachment is permanent and irreversible — once detached, a PaymentMethod can no longer be used for payments or re-attached to a Customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Detach(id string, params *stripe.PaymentMethodDetachParams) (*stripe.PaymentMethod, error) {
+	path := stripe.FormatURLPath("/v1/payment_methods/%s/detach", id)
+	paymentmethod := &stripe.PaymentMethod{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, paymentmethod)
+	return paymentmethod, err
+}
+
+// Returns a list of all PaymentMethods.
+func List(params *stripe.PaymentMethodListParams) *Iter {
+	return getC().List(params)
+}
+
+// Returns a list of all PaymentMethods.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) List(listParams *stripe.PaymentMethodListParams) *Iter {
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.PaymentMethodList{}
+			err := c.B.CallRaw(http.MethodGet, "/v1/payment_methods", c.Key, []byte(b.Encode()), p, list)
+
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
+
+			return ret, list, err
+		}),
+	}
+}
+
+// Iter is an iterator for payment methods.
 type Iter struct {
 	*stripe.Iter
 }
 
-// PaymentMethod returns the application fee which the iterator is currently pointing to.
+// PaymentMethod returns the payment method which the iterator is currently pointing to.
 func (i *Iter) PaymentMethod() *stripe.PaymentMethod {
 	return i.Current().(*stripe.PaymentMethod)
 }

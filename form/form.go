@@ -1,3 +1,6 @@
+// Package form encodes Go structs into URL-encoded form values for Stripe API
+// requests. It uses struct field tags (e.g. `form:"name"`) to control encoding
+// behavior.
 package form
 
 import (
@@ -5,9 +8,13 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const tagName = "form"
@@ -185,6 +192,7 @@ func buildArrayOrSliceEncoder(t reflect.Type) encoderFunc {
 		var arrNames []string
 
 		for i := 0; i < v.Len(); i++ {
+			// Always use indexed format for arrays (e.g., include[0]=foo&include[1]=bar)
 			arrNames = append(keyParts, strconv.Itoa(i))
 
 			indexV := v.Index(i)
@@ -324,6 +332,22 @@ func intEncoder(values *Values, v reflect.Value, keyParts []string, encodeZero b
 	values.Add(FormatKey(keyParts), strconv.FormatInt(val, 10))
 }
 
+func timeEncoder(values *Values, v reflect.Value, keyParts []string, encodeZero bool, _ *formOptions) {
+	val := v.Interface().(time.Time)
+	if val.IsZero() && !encodeZero {
+		return
+	}
+	values.Add(FormatKey(keyParts), val.String())
+}
+
+func decimalEncoder(values *Values, v reflect.Value, keyParts []string, encodeZero bool, _ *formOptions) {
+	val := v.Interface().(decimal.Decimal)
+	if val.IsZero() && !encodeZero {
+		return
+	}
+	values.Add(FormatKey(keyParts), val.String())
+}
+
 func interfaceEncoder(values *Values, v reflect.Value, keyParts []string, encodeZero bool, _ *formOptions) {
 	// interfaceEncoder never encodes a `nil`, but it will pass through an
 	// `encodeZero` value into its chained encoder
@@ -338,16 +362,24 @@ func isAppender(t reflect.Type) bool {
 }
 
 func mapEncoder(values *Values, v reflect.Value, keyParts []string, _ bool, _ *formOptions) {
+	keys := make([]string, 0, v.Len())
 	for _, keyVal := range v.MapKeys() {
-		if Strict && keyVal.Kind() != reflect.String {
-			panic("Don't support serializing maps with non-string keys")
+		if keyVal.Kind() != reflect.String {
+			if Strict {
+				panic("Don't support serializing maps with non-string keys")
+			}
+			// otherwise keyVal.String() will panic later
+			continue
 		}
-
+		keys = append(keys, keyVal.String())
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
 		// Unlike a property on a struct which will contain a zero value even
 		// if never set, any value found in a map has been explicitly set, so
 		// we always make an effort to encode them, even if a zero value
 		// (that's why we pass through `true` here).
-		reflectValue(values, v.MapIndex(keyVal), true, append(keyParts, keyVal.String()))
+		reflectValue(values, v.MapIndex(reflect.ValueOf(key)), true, append(keyParts, key))
 	}
 }
 
@@ -412,6 +444,7 @@ func makeStructEncoder(t reflect.Type) *structEncoder {
 		fldTyp := reflectField.Type
 		fldKind := fldTyp.Kind()
 
+		// validate that fields are of expected types and have expected annotations
 		if Strict && options != nil {
 			if options.Empty && fldKind != reflect.Bool {
 				panic(fmt.Sprintf(
@@ -452,6 +485,15 @@ func makeStructEncoder(t reflect.Type) *structEncoder {
 }
 
 func makeTypeEncoder(t reflect.Type) encoderFunc {
+	// For time.Time, we want to encode imediately it as a Unix timestamp,
+	// and don't want to inspect into it and encode it as a struct.
+	if t == reflect.TypeOf(time.Time{}) {
+		return timeEncoder
+	}
+	if t == reflect.TypeOf(decimal.Decimal{}) {
+		return decimalEncoder
+	}
+
 	switch t.Kind() {
 	case reflect.Array, reflect.Slice:
 		return buildArrayOrSliceEncoder(t)
@@ -541,14 +583,17 @@ func (f *Values) Add(key, val string) {
 // Encode encodes the keys and values into “URL encoded” form
 // ("bar=baz&foo=quux").
 func (f *Values) Encode() string {
+	if f == nil {
+		return ""
+	}
 	var buf bytes.Buffer
 	for _, v := range f.values {
 		if buf.Len() > 0 {
 			buf.WriteByte('&')
 		}
 		key := url.QueryEscape(v.Key)
-		key = strings.Replace(key, "%5B", "[", -1)
-		key = strings.Replace(key, "%5D", "]", -1)
+		key = strings.ReplaceAll(key, "%5B", "[")
+		key = strings.ReplaceAll(key, "%5D", "]")
 		buf.WriteString(key)
 		buf.WriteString("=")
 		buf.WriteString(url.QueryEscape(v.Value))
@@ -598,14 +643,14 @@ func (f *Values) Get(key string) []string {
 // a cohesive way. For example, an array of maps in Rack is encoded with a
 // string like:
 //
-//     arr[][foo]=foo0&arr[][bar]=bar0&arr[][foo]=foo1&arr[][bar]=bar1
+//	arr[][foo]=foo0&arr[][bar]=bar0&arr[][foo]=foo1&arr[][bar]=bar1
 //
 // Because url.Values is a map, values will be handled in a way that's grouped
 // by their key instead of in the order they were added. Therefore the above
 // may by encoded to something like (maps are unordered so the actual result is
 // somewhat non-deterministic):
 //
-//     arr[][foo]=foo0&arr[][foo]=foo1&arr[][bar]=bar0&arr[][bar]=bar1
+//	arr[][foo]=foo0&arr[][foo]=foo1&arr[][bar]=bar0&arr[][bar]=bar1
 //
 // And thus result in an incorrect request to Stripe.
 func (f *Values) ToValues() url.Values {

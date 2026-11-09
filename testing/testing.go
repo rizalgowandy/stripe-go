@@ -1,16 +1,23 @@
+// Package testing provides shared test fixtures and helpers used across all
+// packages in the Stripe Go SDK, including test API keys and connectivity
+// checks for stripe-mock.
 package testing
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strconv"
 	"strings"
+	"testing"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
-	"golang.org/x/net/http2"
+	"github.com/stretchr/testify/assert"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
 // This file should contain any testing helpers that should be commonly
@@ -25,11 +32,14 @@ const (
 	// added in a more recent version of stripe-mock, we can show people a
 	// better error message instead of the test suite crashing with a bunch of
 	// confusing 404 errors or the like.
-	MockMinimumVersion = "0.103.0"
+	MockMinimumVersion = "0.109.0"
 
 	// TestMerchantID is a token that can be used to represent a merchant ID in
 	// simple tests.
 	TestMerchantID = "acct_123"
+
+	// TestAPIKey is an API key that can be used against stripe-mock in tests.
+	TestAPIKey = "sk_test_myTestKey"
 )
 
 func init() {
@@ -48,32 +58,27 @@ func init() {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
-	}
-
-	// Go can often enable HTTP/2 automatically if it's supported, but
-	// confusingly, if you set `TLSClientConfig`, it disables it and you have
-	// to explicitly invoke http2's `ConfigureTransport` to get it back.
-	//
-	// See the incorrectly closed bug report here:
-	//
-	//     https://github.com/golang/go/issues/20645
-	//
-	err := http2.ConfigureTransport(transport)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize HTTP/2 transport: %v\n", err)
-		os.Exit(1)
+		// ForceAttemptHTTP2 is needed because Go disables HTTP/2 when TLSClientConfig is set
+		ForceAttemptHTTP2: true,
 	}
 
 	httpClient := &http.Client{
 		Transport: transport,
 	}
 
-	resp, err := httpClient.Get("https://localhost:" + port)
+	resp, err := httpClient.Get("https://127.0.0.1:" + port)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't reach stripe-mock at `localhost:%s` (%v). Is "+
 			"it running? Please see README for setup instructions.\n", port, err)
 		os.Exit(1)
 	}
+
+	if resp.ProtoMajor != 2 {
+		fmt.Fprintf(os.Stderr, "Expected HTTP/2 connection to stripe-mock, but got %s. "+
+			"This may indicate ForceAttemptHTTP2 is not set correctly.\n", resp.Proto)
+		os.Exit(1)
+	}
+
 	version := resp.Header.Get("Stripe-Mock-Version")
 	if version != "master" && compareVersions(version, MockMinimumVersion) > 0 {
 		fmt.Fprintf(os.Stderr, "Your version of stripe-mock (%s) is too old. The "+
@@ -82,7 +87,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	stripe.Key = "sk_test_myTestKey"
+	stripe.Key = TestAPIKey
 
 	// Configure a backend for stripe-mock and set it for both the API and
 	// Uploads (unlike the real Stripe API, stripe-mock supports both these
@@ -90,13 +95,37 @@ func init() {
 	stripeMockBackend := stripe.GetBackendWithConfig(
 		stripe.APIBackend,
 		&stripe.BackendConfig{
-			URL:           stripe.String("https://localhost:" + port),
+			URL:           stripe.String("https://127.0.0.1:" + port),
 			HTTPClient:    httpClient,
 			LeveledLogger: stripe.DefaultLeveledLogger,
 		},
 	)
 	stripe.SetBackend(stripe.APIBackend, stripeMockBackend)
 	stripe.SetBackend(stripe.UploadsBackend, stripeMockBackend)
+}
+
+func MockServer(t *testing.T, method, path string, params interface{}, resp string) *httptest.Server {
+	return MockServerWithStripeContext(t, method, path, "", params, resp)
+}
+
+func MockServerWithStripeContext(t *testing.T, method, path, stripeContext string, params interface{}, resp string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, r.Method, method)
+		assert.Equal(t, r.URL.Path, path)
+		assert.Equal(t, r.Header.Get("Authorization"), "Bearer "+TestAPIKey)
+		if stripeContext != "" {
+			assert.Equal(t, r.Header.Get("Stripe-Context"), stripeContext)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		if len(body) > 0 {
+			assert.NoError(t, json.Unmarshal(body, params))
+		}
+		data := []byte(resp)
+		_, err = w.Write(data)
+		assert.NoError(t, err)
+	}))
 }
 
 // compareVersions compares two semantic version strings. We need this because

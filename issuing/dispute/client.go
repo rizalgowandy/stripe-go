@@ -1,39 +1,55 @@
-// Package dispute provides API functions related to issuing disputes.
 //
-// For more details, see: https://stripe.com/docs/api/go#issuing_disputes
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package dispute provides the /v1/issuing/disputes APIs
 package dispute
 
 import (
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /issuing/disputes APIs.
+// Client is used to invoke /v1/issuing/disputes APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// New creates a new issuing dispute.
+// Creates an Issuing Dispute object. Individual pieces of evidence within the evidence object are optional at this point. Stripe only validates that required evidence is present during submission. Refer to [Dispute reasons and evidence](https://docs.stripe.com/docs/issuing/purchases/disputes#dispute-reasons-and-evidence) for more details about evidence requirements.
 func New(params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	return getC().New(params)
 }
 
-// New creates a new issuing dispute.
+// Creates an Issuing Dispute object. Individual pieces of evidence within the evidence object are optional at this point. Stripe only validates that required evidence is present during submission. Refer to [Dispute reasons and evidence](https://docs.stripe.com/docs/issuing/purchases/disputes#dispute-reasons-and-evidence) for more details about evidence requirements.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) New(params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	dispute := &stripe.IssuingDispute{}
-	err := c.B.Call(http.MethodPost, "/v1/issuing/disputes", c.Key, params, dispute)
+	err := c.B.Call(
+		http.MethodPost, "/v1/issuing/disputes", c.Key, params, dispute)
 	return dispute, err
 }
 
-// Get returns the details of an issuing dispute.
+// Retrieves an Issuing Dispute object.
 func Get(id string, params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of an issuing dispute.
+// Retrieves an Issuing Dispute object.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Get(id string, params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	path := stripe.FormatURLPath("/v1/issuing/disputes/%s", id)
 	dispute := &stripe.IssuingDispute{}
@@ -41,25 +57,16 @@ func (c Client) Get(id string, params *stripe.IssuingDisputeParams) (*stripe.Iss
 	return dispute, err
 }
 
-// Submit dismisses a dispute in the customer's favor.
-func Submit(id string, params *stripe.IssuingDisputeSubmitParams) (*stripe.IssuingDispute, error) {
-	return getC().Submit(id, params)
-}
-
-// Submit dismisses a dispute in the customer's favor.
-func (c Client) Submit(id string, params *stripe.IssuingDisputeSubmitParams) (*stripe.IssuingDispute, error) {
-	path := stripe.FormatURLPath("/v1/issuing/disputes/%s/submit", id)
-	dispute := &stripe.IssuingDispute{}
-	err := c.B.Call(http.MethodPost, path, c.Key, params, dispute)
-	return dispute, err
-}
-
-// Update updates an issuing dispute.
+// Updates the specified Issuing Dispute object by setting the values of the parameters passed. Any parameters not provided will be left unchanged. Properties on the evidence object can be unset by passing in an empty string.
 func Update(id string, params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	return getC().Update(id, params)
 }
 
-// Update updates an issuing dispute.
+// Updates the specified Issuing Dispute object by setting the values of the parameters passed. Any parameters not provided will be left unchanged. Properties on the evidence object can be unset by passing in an empty string.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Update(id string, params *stripe.IssuingDisputeParams) (*stripe.IssuingDispute, error) {
 	path := stripe.FormatURLPath("/v1/issuing/disputes/%s", id)
 	dispute := &stripe.IssuingDispute{}
@@ -67,24 +74,47 @@ func (c Client) Update(id string, params *stripe.IssuingDisputeParams) (*stripe.
 	return dispute, err
 }
 
-// List returns a list of issuing disputes.
+// Submits an Issuing Dispute to the card network. Stripe validates that all evidence fields required for the dispute's reason are present. For more details, see [Dispute reasons and evidence](https://docs.stripe.com/docs/issuing/purchases/disputes#dispute-reasons-and-evidence).
+func Submit(id string, params *stripe.IssuingDisputeSubmitParams) (*stripe.IssuingDispute, error) {
+	return getC().Submit(id, params)
+}
+
+// Submits an Issuing Dispute to the card network. Stripe validates that all evidence fields required for the dispute's reason are present. For more details, see [Dispute reasons and evidence](https://docs.stripe.com/docs/issuing/purchases/disputes#dispute-reasons-and-evidence).
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Submit(id string, params *stripe.IssuingDisputeSubmitParams) (*stripe.IssuingDispute, error) {
+	path := stripe.FormatURLPath("/v1/issuing/disputes/%s/submit", id)
+	dispute := &stripe.IssuingDispute{}
+	err := c.B.Call(http.MethodPost, path, c.Key, params, dispute)
+	return dispute, err
+}
+
+// Returns a list of Issuing Dispute objects. The objects are sorted in descending order by creation date, with the most recently created object appearing first.
 func List(params *stripe.IssuingDisputeListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of issuing disputes.
+// Returns a list of Issuing Dispute objects. The objects are sorted in descending order by creation date, with the most recently created object appearing first.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) List(listParams *stripe.IssuingDisputeListParams) *Iter {
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.IssuingDisputeList{}
-		err := c.B.CallRaw(http.MethodGet, "/v1/issuing/disputes", c.Key, b, p, list)
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.IssuingDisputeList{}
+			err := c.B.CallRaw(http.MethodGet, "/v1/issuing/disputes", c.Key, []byte(b.Encode()), p, list)
 
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
 // Iter is an iterator for issuing disputes.

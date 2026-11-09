@@ -2,11 +2,11 @@ package webhook_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
-	"github.com/stripe/stripe-go/v72/webhook"
+	"github.com/stripe/stripe-go/v87/webhook"
 )
 
 func Example() {
@@ -16,7 +16,7 @@ func Example() {
 		const MaxBodyBytes = int64(65536)
 		req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -27,11 +27,11 @@ func Example() {
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest) // Return a 400 error on a bad signature
-			fmt.Fprintf(w, "%v", err)
+			_, _ = fmt.Fprintf(w, "%v", err)
 			return
 		}
 
-		fmt.Fprintf(w, "Received signed event: %v", event)
+		_, _ = fmt.Fprintf(w, "Received signed event: %v", event)
 	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

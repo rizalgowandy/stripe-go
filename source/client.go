@@ -1,69 +1,99 @@
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package source provides the /v1/sources APIs
 package source
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
+	stripe "github.com/stripe/stripe-go/v87"
 )
 
-// Client is used to invoke /sources APIs.
+// Client is used to invoke /v1/sources APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// New creates a new source.
-func New(params *stripe.SourceObjectParams) (*stripe.Source, error) {
+// Creates a new source object.
+func New(params *stripe.SourceParams) (*stripe.Source, error) {
 	return getC().New(params)
 }
 
-// New creates a new source.
-func (c Client) New(params *stripe.SourceObjectParams) (*stripe.Source, error) {
-	p := &stripe.Source{}
-	err := c.B.Call(http.MethodPost, "/v1/sources", c.Key, params, p)
-	return p, err
+// Creates a new source object.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) New(params *stripe.SourceParams) (*stripe.Source, error) {
+	source := &stripe.Source{}
+	err := c.B.Call(http.MethodPost, "/v1/sources", c.Key, params, source)
+	return source, err
 }
 
-// Get returns the details of a source.
-func Get(id string, params *stripe.SourceObjectParams) (*stripe.Source, error) {
+// Retrieves an existing source object. Supply the unique source ID from a source creation request and Stripe will return the corresponding up-to-date source object information.
+func Get(id string, params *stripe.SourceParams) (*stripe.Source, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of a source.
-func (c Client) Get(id string, params *stripe.SourceObjectParams) (*stripe.Source, error) {
+// Retrieves an existing source object. Supply the unique source ID from a source creation request and Stripe will return the corresponding up-to-date source object information.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Get(id string, params *stripe.SourceParams) (*stripe.Source, error) {
 	path := stripe.FormatURLPath("/v1/sources/%s", id)
 	source := &stripe.Source{}
 	err := c.B.Call(http.MethodGet, path, c.Key, params, source)
 	return source, err
 }
 
-// Update updates a source's properties.
-func Update(id string, params *stripe.SourceObjectParams) (*stripe.Source, error) {
+// Updates the specified source by setting the values of the parameters passed. Any parameters not provided will be left unchanged.
+//
+// This request accepts the metadata and owner as arguments. It is also possible to update type specific information for selected payment methods. Please refer to our [payment method guides](https://docs.stripe.com/docs/sources) for more detail.
+func Update(id string, params *stripe.SourceParams) (*stripe.Source, error) {
 	return getC().Update(id, params)
 }
 
-// Update updates a source's properties.
-func (c Client) Update(id string, params *stripe.SourceObjectParams) (*stripe.Source, error) {
+// Updates the specified source by setting the values of the parameters passed. Any parameters not provided will be left unchanged.
+//
+// This request accepts the metadata and owner as arguments. It is also possible to update type specific information for selected payment methods. Please refer to our [payment method guides](https://docs.stripe.com/docs/sources) for more detail.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Update(id string, params *stripe.SourceParams) (*stripe.Source, error) {
 	path := stripe.FormatURLPath("/v1/sources/%s", id)
 	source := &stripe.Source{}
 	err := c.B.Call(http.MethodPost, path, c.Key, params, source)
 	return source, err
 }
 
-// Detach detaches the source from a customer.
-func Detach(id string, params *stripe.SourceObjectDetachParams) (*stripe.Source, error) {
+// Delete a specified source for a given customer.
+func Detach(id string, params *stripe.SourceDetachParams) (*stripe.Source, error) {
 	return getC().Detach(id, params)
 }
 
-// Detach detaches the source from a customer.
-func (c Client) Detach(id string, params *stripe.SourceObjectDetachParams) (*stripe.Source, error) {
+// Delete a specified source for a given customer.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Detach(id string, params *stripe.SourceDetachParams) (*stripe.Source, error) {
 	if params.Customer == nil {
-		return nil, errors.New("Invalid source detach params: Customer needs to be set")
+		return nil, fmt.Errorf(
+			"invalid source detach params: Customer needs to be set")
 	}
-
-	path := stripe.FormatURLPath("/v1/customers/%s/sources/%s",
-		stripe.StringValue(params.Customer), id)
+	path := stripe.FormatURLPath(
+		"/v1/customers/%s/sources/%s", stripe.StringValue(params.Customer), id)
 	source := &stripe.Source{}
 	err := c.B.Call(http.MethodDelete, path, c.Key, params, source)
 	return source, err

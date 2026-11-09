@@ -4,28 +4,39 @@
 //
 //
 
-// Package balancetransaction provides the /balance_transactions APIs
+// Package balancetransaction provides the /v1/balance_transactions APIs
 package balancetransaction
 
 import (
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /balance_transactions APIs.
+// Client is used to invoke /v1/balance_transactions APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// Get returns the details of a balance transaction.
+// Retrieves the balance transaction with the given ID.
+//
+// Note that this endpoint previously used the path /v1/balance/history/:id.
 func Get(id string, params *stripe.BalanceTransactionParams) (*stripe.BalanceTransaction, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of a balance transaction.
+// Retrieves the balance transaction with the given ID.
+//
+// Note that this endpoint previously used the path /v1/balance/history/:id.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) Get(id string, params *stripe.BalanceTransactionParams) (*stripe.BalanceTransaction, error) {
 	path := stripe.FormatURLPath("/v1/balance_transactions/%s", id)
 	balancetransaction := &stripe.BalanceTransaction{}
@@ -33,24 +44,34 @@ func (c Client) Get(id string, params *stripe.BalanceTransactionParams) (*stripe
 	return balancetransaction, err
 }
 
-// List returns a list of balance transactions.
+// Returns a list of transactions that have contributed to the Stripe account balance (for example, charges, transfers, and so on). The transactions return in sorted order, with the most recent transactions appearing first.
+//
+// The previous name of this endpoint was “Balance history,” and it used the path /v1/balance/history.
 func List(params *stripe.BalanceTransactionListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of balance transactions.
+// Returns a list of transactions that have contributed to the Stripe account balance (for example, charges, transfers, and so on). The transactions return in sorted order, with the most recent transactions appearing first.
+//
+// The previous name of this endpoint was “Balance history,” and it used the path /v1/balance/history.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 func (c Client) List(listParams *stripe.BalanceTransactionListParams) *Iter {
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.BalanceTransactionList{}
-		err := c.B.CallRaw(http.MethodGet, "/v1/balance_transactions", c.Key, b, p, list)
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.BalanceTransactionList{}
+			err := c.B.CallRaw(http.MethodGet, "/v1/balance_transactions", c.Key, []byte(b.Encode()), p, list)
 
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
 // Iter is an iterator for balance transactions.

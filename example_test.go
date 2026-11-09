@@ -3,11 +3,11 @@ package stripe_test
 import (
 	"log"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/charge"
-	"github.com/stripe/stripe-go/v72/customer"
-	"github.com/stripe/stripe-go/v72/invoice"
-	"github.com/stripe/stripe-go/v72/plan"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/charge"
+	"github.com/stripe/stripe-go/v87/customer"
+	"github.com/stripe/stripe-go/v87/invoice"
+	"github.com/stripe/stripe-go/v87/plan"
 )
 
 func ExampleCharge_new() {
@@ -17,7 +17,9 @@ func ExampleCharge_new() {
 		Amount:   stripe.Int64(1000),
 		Currency: stripe.String(string(stripe.CurrencyUSD)),
 	}
-	params.SetSource("tok_visa")
+	if err := params.SetSource("tok_visa"); err != nil {
+		log.Fatal(err)
+	}
 	params.AddMetadata("key", "value")
 
 	ch, err := charge.New(params)

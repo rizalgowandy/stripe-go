@@ -1,81 +1,103 @@
-// Package reportrun provides API functions related to report runs.
 //
-// For more details, see: https://stripe.com/docs/api/go#reporting_report_run
+//
+// File generated from our OpenAPI spec
+//
+//
+
+// Package reportrun provides the /v1/reporting/report_runs APIs
 package reportrun
 
 import (
 	"net/http"
 
-	stripe "github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/form"
+	stripe "github.com/stripe/stripe-go/v87"
+	"github.com/stripe/stripe-go/v87/form"
 )
 
-// Client is used to invoke /reporting/report_runs APIs.
+// Client is used to invoke /v1/reporting/report_runs APIs.
+// Deprecated: Use [stripe.Client] instead. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
 type Client struct {
 	B   stripe.Backend
 	Key string
 }
 
-// New creates a new report run.
-func New(params *stripe.ReportRunParams) (*stripe.ReportRun, error) {
+// Creates a new object and begin running the report. (Certain report types require a [live-mode API key](https://stripe.com/docs/keys#test-live-modes).)
+func New(params *stripe.ReportingReportRunParams) (*stripe.ReportingReportRun, error) {
 	return getC().New(params)
 }
 
-// New creates a new report run.
-func (c Client) New(params *stripe.ReportRunParams) (*stripe.ReportRun, error) {
-	reportrun := &stripe.ReportRun{}
-	err := c.B.Call(http.MethodPost, "/v1/reporting/report_runs", c.Key, params, reportrun)
+// Creates a new object and begin running the report. (Certain report types require a [live-mode API key](https://stripe.com/docs/keys#test-live-modes).)
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) New(params *stripe.ReportingReportRunParams) (*stripe.ReportingReportRun, error) {
+	reportrun := &stripe.ReportingReportRun{}
+	err := c.B.Call(
+		http.MethodPost, "/v1/reporting/report_runs", c.Key, params, reportrun)
 	return reportrun, err
 }
 
-// Get returns the details of a report run.
-func Get(id string, params *stripe.ReportRunParams) (*stripe.ReportRun, error) {
+// Retrieves the details of an existing Report Run.
+func Get(id string, params *stripe.ReportingReportRunParams) (*stripe.ReportingReportRun, error) {
 	return getC().Get(id, params)
 }
 
-// Get returns the details of a report run.
-func (c Client) Get(id string, params *stripe.ReportRunParams) (*stripe.ReportRun, error) {
+// Retrieves the details of an existing Report Run.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) Get(id string, params *stripe.ReportingReportRunParams) (*stripe.ReportingReportRun, error) {
 	path := stripe.FormatURLPath("/v1/reporting/report_runs/%s", id)
-	reportrun := &stripe.ReportRun{}
+	reportrun := &stripe.ReportingReportRun{}
 	err := c.B.Call(http.MethodGet, path, c.Key, params, reportrun)
 	return reportrun, err
 }
 
-// List returns a list of report runs.
-func List(params *stripe.ReportRunListParams) *Iter {
+// Returns a list of Report Runs, with the most recent appearing first.
+func List(params *stripe.ReportingReportRunListParams) *Iter {
 	return getC().List(params)
 }
 
-// List returns a list of report runs.
-func (c Client) List(listParams *stripe.ReportRunListParams) *Iter {
-	return &Iter{stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
-		list := &stripe.ReportRunList{}
-		err := c.B.CallRaw(http.MethodGet, "/v1/reporting/report_runs", c.Key, b, p, list)
+// Returns a list of Report Runs, with the most recent appearing first.
+//
+// Deprecated: Client methods are deprecated. This should be accessed instead through [stripe.Client]. See the [migration guide] for more info.
+//
+// [migration guide]: https://github.com/stripe/stripe-go/wiki/Migration-guide-for-Stripe-Client
+func (c Client) List(listParams *stripe.ReportingReportRunListParams) *Iter {
+	return &Iter{
+		Iter: stripe.GetIter(listParams, func(p *stripe.Params, b *form.Values) ([]interface{}, stripe.ListContainer, error) {
+			list := &stripe.ReportingReportRunList{}
+			err := c.B.CallRaw(http.MethodGet, "/v1/reporting/report_runs", c.Key, []byte(b.Encode()), p, list)
 
-		ret := make([]interface{}, len(list.Data))
-		for i, v := range list.Data {
-			ret[i] = v
-		}
+			ret := make([]interface{}, len(list.Data))
+			for i, v := range list.Data {
+				ret[i] = v
+			}
 
-		return ret, list, err
-	})}
+			return ret, list, err
+		}),
+	}
 }
 
-// Iter is an iterator for report runs.
+// Iter is an iterator for reporting report runs.
 type Iter struct {
 	*stripe.Iter
 }
 
-// ReportRun returns the report run which the iterator is currently pointing to.
-func (i *Iter) ReportRun() *stripe.ReportRun {
-	return i.Current().(*stripe.ReportRun)
+// ReportingReportRun returns the reporting report run which the iterator is currently pointing to.
+func (i *Iter) ReportingReportRun() *stripe.ReportingReportRun {
+	return i.Current().(*stripe.ReportingReportRun)
 }
 
-// ReportRunList returns the current list object which the iterator is
+// ReportingReportRunList returns the current list object which the iterator is
 // currently using. List objects will change as new API calls are made to
 // continue pagination.
-func (i *Iter) ReportRunList() *stripe.ReportRunList {
-	return i.List().(*stripe.ReportRunList)
+func (i *Iter) ReportingReportRunList() *stripe.ReportingReportRunList {
+	return i.List().(*stripe.ReportingReportRunList)
 }
 
 func getC() Client {

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	assert "github.com/stretchr/testify/require"
-	stripe "github.com/stripe/stripe-go/v72"
-	_ "github.com/stripe/stripe-go/v72/testing"
+	stripe "github.com/stripe/stripe-go/v87"
+	_ "github.com/stripe/stripe-go/v87/testing"
 )
 
 func TestCheckoutSessionGet(t *testing.T) {
@@ -20,13 +20,6 @@ func TestCheckoutSessionNew(t *testing.T) {
 		ClientReferenceID: stripe.String("1234"),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Amount:      stripe.Int64(1234),
-				Currency:    stripe.String(string(stripe.CurrencyUSD)),
-				Description: stripe.String("description"),
-				Images: stripe.StringSlice([]string{
-					"https://stripe.com/image1",
-				}),
-				Name:     stripe.String("name"),
 				Quantity: stripe.Int64(2),
 			},
 		},
@@ -45,16 +38,10 @@ func TestCheckoutSessionNew(t *testing.T) {
 				Name:    stripe.String("name"),
 			},
 		},
-		PaymentMethodTypes: stripe.StringSlice([]string{
+		AllowedPaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
 		}),
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			Items: []*stripe.CheckoutSessionSubscriptionDataItemsParams{
-				{
-					Plan:     stripe.String("plan"),
-					Quantity: stripe.Int64(2),
-				},
-			},
 			Metadata: map[string]string{
 				"attr1": "val1",
 				"attr2": "val2",
@@ -80,8 +67,8 @@ func TestCheckoutSessionList(t *testing.T) {
 }
 
 func TestCheckoutSessionListLineItems(t *testing.T) {
-	params := &stripe.CheckoutSessionListLineItemsParams{}
-	i := ListLineItems("cs_123", params)
+	params := &stripe.CheckoutSessionListLineItemsParams{Session: stripe.String("cs_123")}
+	i := ListLineItems(params)
 
 	// Verify that we can get at least one line item.
 	assert.True(t, i.Next())

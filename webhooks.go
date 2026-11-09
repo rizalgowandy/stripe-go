@@ -1,0 +1,411 @@
+package stripe
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+)
+
+//
+// Public constants
+//
+
+const (
+	// DefaultTolerance indicates that signatures older than this will be rejected by ConstructEvent.
+	WebhookDefaultTolerance time.Duration = 300 * time.Second
+	// signingVersion represents the version of the signature we currently use.
+	signingVersion string = "v1"
+)
+
+//
+// Public variables
+//
+
+// This block represents the list of errors that could be raised when using the webhook package.
+var (
+	ErrWebhookEmptySecret      = errors.New("webhook secret must not be empty")
+	ErrWebhookInvalidHeader    = errors.New("webhook has invalid Stripe-Signature header")
+	ErrWebhookNoValidSignature = errors.New("webhook had no valid signature")
+	ErrWebhookNotSigned        = errors.New("webhook has no Stripe-Signature header")
+	ErrWebhookTooOld           = errors.New("timestamp wasn't within tolerance")
+)
+
+//
+// Public functions
+//
+
+// ComputeSignature computes a webhook signature using Stripe's v1 signing
+// method.
+//
+// See https://stripe.com/docs/webhooks#signatures for more information.
+func ComputeSignature(t time.Time, payload []byte, secret string) []byte {
+	mac := hmac.New(sha256.New, []byte(secret))
+	// hmac.Hash.Write never returns a non-nil error per the hash.Hash interface contract.
+	_, _ = fmt.Fprintf(mac, "%d", t.Unix())
+	mac.Write([]byte("."))
+	mac.Write(payload)
+	return mac.Sum(nil)
+}
+
+// ConstructEvent constructs a [snapshot event] from an incoming webhook after
+// verifying its authenticity. To work with a webhook that has already been
+// verified (i.e. one from a cloud provider, an asynchronous queue, or during
+// testing), see [ConstructEventWithoutVerification]. Returns an error
+// if the body or Stripe-Signature header provided are unreadable, if the
+// signature doesn't match, or if the timestamp for the signature is older than
+// DefaultTolerance.
+// This will return an error if the event API version does not match the
+// APIVersion constant.
+//
+// [snapshot event]: https://docs.stripe.com/event-destinations#snapshot-payload
+func ConstructEvent(payload []byte, header string, secret string, opts ...WebhookOption) (Event, error) {
+	cfg := webhookConfig{
+		Tolerance: WebhookDefaultTolerance,
+	}
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&cfg)
+	}
+	return constructEvent(payload, header, secret, cfg)
+}
+
+// ConstructEventWithoutVerification constructs a [snapshot event] from an
+// incoming webhook without first verifying its authenticity. Should be used
+// after calling [ValidatePayload] or with input from a trusted source (such as
+// [AWS EventBridge], or [Azure Event Grid] payload). Or, to verify & construct
+// in a single call, use [ConstructEvent] instead.
+//
+// [snapshot event]: https://docs.stripe.com/event-destinations#snapshot-payload
+// [AWS EventBridge]: https://docs.stripe.com/event-destinations/eventbridge
+// [Azure Event Grid]: https://docs.stripe.com/event-destinations/eventgrid
+func ConstructEventWithoutVerification(payload []byte, opts ...WebhookOption) (Event, error) {
+	cfg := webhookConfig{
+		IgnoreAPIVersionMismatch: true,
+	}
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&cfg)
+	}
+
+	innerBytes, err := maybeExtractFromCloudProviderEnvelope(payload)
+	if err != nil {
+		return Event{}, err
+	}
+	return buildV1Event(innerBytes, cfg.IgnoreAPIVersionMismatch)
+}
+
+// ValidatePayload verifies the authenticity (and recency) of a webhook,
+// returning an error if there's a mismatch. Useful for quickly validating
+// incoming webhooks before storing them for later processing (at which time
+// you can use the *WithoutVerification functions for parsing).
+func ValidatePayload(payload []byte, header string, secret string, opts ...WebhookOption) error {
+	cfg := webhookConfig{
+		Tolerance: WebhookDefaultTolerance,
+	}
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&cfg)
+	}
+	return validatePayload(payload, header, secret, cfg)
+}
+
+type WebhookOption func(*webhookConfig)
+
+// WithTolerance validates event timestamps using a custom Tolerance window. If this is
+// not set and `IgnoreTolerance` is false, will default to
+// `WebhookDefaultTolerance`.
+func WithTolerance(tolerance time.Duration) WebhookOption {
+	return func(w *webhookConfig) {
+		w.Tolerance = tolerance
+	}
+}
+
+// WithIgnoreTolerance will ignore the the event signature's timestamp.
+func WithIgnoreTolerance() WebhookOption {
+	return func(w *webhookConfig) {
+		w.IgnoreTolerance = true
+	}
+}
+
+// WithIgnoreAPIVersionMismatch will ignore validating whether an event's API version
+// matches the stripe-go API version. This is currently only used for ConstructEvent.
+func WithIgnoreAPIVersionMismatch() WebhookOption {
+	return func(w *webhookConfig) {
+		w.IgnoreAPIVersionMismatch = true
+	}
+}
+
+type webhookConfig struct {
+	Tolerance                time.Duration
+	IgnoreTolerance          bool
+	IgnoreAPIVersionMismatch bool
+}
+
+//
+// Private types
+//
+
+type signedHeader struct {
+	timestamp  time.Time
+	signatures [][]byte
+}
+
+type signatureDebugMetadata struct {
+	secret      string
+	destination string
+	payload     string
+}
+
+type webhookSignatureError struct {
+	message string
+}
+
+//
+// Private functions
+//
+
+func (e *webhookSignatureError) Error() string { return e.message }
+
+func (e *webhookSignatureError) Unwrap() error { return ErrWebhookNoValidSignature }
+
+func isCompatibleAPIVersion(sdkAPIVersion, eventAPIVersion string) bool {
+	// If the event api version is from before we started adding
+	// a release train, there's no way its compatible with this
+	// version
+	if !strings.Contains(eventAPIVersion, ".") {
+		return false
+	}
+
+	// if the SDK is pinned to a preview version, the event's API version must match exactly
+	var currentReleaseTrain = strings.Split(sdkAPIVersion, ".")[1]
+	if currentReleaseTrain == "preview" {
+		return sdkAPIVersion == eventAPIVersion
+	}
+
+	// versions are yyyy-MM-dd.train
+	var eventReleaseTrain = strings.Split(eventAPIVersion, ".")[1]
+	return eventReleaseTrain == currentReleaseTrain
+}
+
+func constructEvent(payload []byte, sigHeader string, secret string, cfg webhookConfig) (Event, error) {
+	e := Event{}
+
+	if err := validatePayload(payload, sigHeader, secret, cfg); err != nil {
+		return e, err
+	}
+
+	return buildV1Event(payload, cfg.IgnoreAPIVersionMismatch)
+}
+
+func buildV1Event(payload []byte, ignoreAPIVersionMismatch bool) (Event, error) {
+	var peek struct {
+		Object string `json:"object"`
+	}
+	if err := json.Unmarshal(payload, &peek); err != nil {
+		return Event{}, fmt.Errorf("failed to parse webhook body json: %s", err.Error())
+	}
+	if peek.Object != "event" {
+		return Event{}, fmt.Errorf("you passed a thin event notification to a function that expects a webhook; use an EventNotification function instead")
+	}
+	var event Event
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return Event{}, fmt.Errorf("failed to parse webhook body json: %s", err.Error())
+	}
+
+	if !ignoreAPIVersionMismatch && !isCompatibleAPIVersion(APIVersion, event.APIVersion) {
+		return event, fmt.Errorf("received event with API version %s, but stripe-go %s expects API version %s. We recommend that you create a WebhookEndpoint with this API version. Otherwise, you can disable this error by using `ConstructEventWithOptions(..., ConstructEventOptions{..., ignoreAPIVersionMismatch: true})`  but be wary that objects may be incorrectly deserialized", event.APIVersion, ClientVersion, APIVersion)
+	}
+
+	return event, nil
+}
+
+func parseSignatureHeader(header string) (*signedHeader, error) {
+	sh := &signedHeader{}
+
+	if header == "" {
+		return sh, ErrWebhookNotSigned
+	}
+
+	// Signed header looks like "t=1495999758,v1=ABC,v1=DEF,v0=GHI"
+	pairs := strings.Split(header, ",")
+	for _, pair := range pairs {
+		parts := strings.Split(pair, "=")
+		if len(parts) != 2 {
+			return sh, ErrWebhookInvalidHeader
+		}
+
+		switch parts[0] {
+		case "t":
+			timestamp, err := strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				return sh, ErrWebhookInvalidHeader
+			}
+			sh.timestamp = time.Unix(timestamp, 0)
+
+		case signingVersion:
+			sig, err := hex.DecodeString(parts[1])
+			if err != nil {
+				continue // Ignore invalid signatures
+			}
+
+			sh.signatures = append(sh.signatures, sig)
+
+		default:
+			continue // Ignore unknown parts of the header
+		}
+	}
+
+	if len(sh.signatures) == 0 {
+		return sh, ErrWebhookNoValidSignature
+	}
+
+	return sh, nil
+}
+
+func validatePayload(payload []byte, sigHeader string, secret string, cfg webhookConfig) error {
+
+	header, err := parseSignatureHeader(sigHeader)
+	if err != nil {
+		return err
+	}
+
+	expiredTimestamp := time.Since(header.timestamp) > cfg.Tolerance
+	if !cfg.IgnoreTolerance && expiredTimestamp {
+		return ErrWebhookTooOld
+	}
+
+	// An empty secret would otherwise verify successfully against a signature
+	// forged with an empty key, since HMAC accepts a zero-length key.
+	if strings.Trim(secret, " \t\r\n\f\v") == "" {
+		return ErrWebhookEmptySecret
+	}
+
+	expectedSignature := ComputeSignature(header.timestamp, payload, secret)
+	// Check all given v1 signatures, multiple signatures will be sent temporarily in the case of a rolled signature secret
+	for _, sig := range header.signatures {
+		if hmac.Equal(expectedSignature, sig) {
+			return nil
+		}
+	}
+
+	return signatureVerificationError(sigHeader, payload, secret)
+}
+
+// signatureVerificationError builds an HMAC-mismatch error using optional header metadata.
+func signatureVerificationError(header string, payload []byte, secret string) error {
+	metadata := parseSignatureDebugMetadata(header)
+
+	// If metadata has an asterisk-masked secret, compare against its length and last four characters
+	maskedSecret := metadata.secret
+	secretSuffix := secret[max(0, len(secret)-4):]
+	maskedSuffix := maskedSecret[max(0, len(maskedSecret)-4):]
+	if strings.Contains(maskedSecret, "*") && (len(secret) != len(maskedSecret) || secretSuffix != maskedSuffix) {
+		dashboardURL := "https://dashboard.stripe.com/webhooks"
+		if metadata.destination != "" {
+			dashboardURL += "/" + url.PathEscape(metadata.destination)
+		}
+		return &webhookSignatureError{message: fmt.Sprintf(
+			"Webhook signature verification failed. This request may not have originated from Stripe.\n\n"+
+				"The signing secret you provided is %d characters long and ends in `%s`. "+
+				"However, the signing secret for this destination is %d characters long and looks like `%s`. "+
+				"Ensure you're using the signing secret for this destination, as shown on the Dashboard: %s\n\n"+
+				"Learn more: https://docs.stripe.com/webhooks/signature",
+			len(secret), secretSuffix, len(maskedSecret), maskedSecret, dashboardURL,
+		)}
+	}
+
+	// If metadata includes the truncated payload hash, compare with the payload passed in
+	if len(metadata.payload) == 8 {
+		if _, err := hex.DecodeString(metadata.payload); err == nil {
+			expectedHash := strings.ToLower(metadata.payload)
+			hash := sha256.Sum256(payload)
+			actualHash := hex.EncodeToString(hash[len(hash)-4:])
+			if expectedHash != actualHash {
+				return &webhookSignatureError{message: fmt.Sprintf(
+					"Webhook signature verification failed.\n\n"+
+						"The request body you passed to this function differs from the request body sent by Stripe to this webhook destination.\n"+
+						"The SHA-256 hash of the body should end in `%s`. However, the SHA-256 hash of the body you provided ends in `%s`.\n\n"+
+						"Make sure your code does not reformat or otherwise alter the raw HTTP request body before passing it to this function.\n\n"+
+						"Learn more: https://docs.stripe.com/webhooks/signature",
+					expectedHash, actualHash,
+				)}
+			}
+		}
+	}
+
+	// Fall back to the generic error if no debug metadata available
+	return ErrWebhookNoValidSignature
+}
+
+// parseSignatureDebugMetadata extracts metadata from the stripe-signature header value to help debug verification failures.
+func parseSignatureDebugMetadata(header string) signatureDebugMetadata {
+	// For each metadata key, extract the first value found in the header
+	metadata := signatureDebugMetadata{}
+	values := map[string]*string{"secret": &metadata.secret, "destination": &metadata.destination, "payload": &metadata.payload}
+	for _, item := range strings.Split(header, ",") {
+		key, value, _ := strings.Cut(strings.TrimSpace(item), "=")
+		if field, ok := values[key]; ok {
+			if safeSignatureMetadataValue(value) {
+				*field = strings.TrimSpace(value)
+			}
+			delete(values, key)
+		}
+	}
+	return metadata
+}
+
+func safeSignatureMetadataValue(value string) bool {
+	// Ignore overly long, potentially attacker-provided metadata values
+	return len(value) <= 100
+}
+
+// For mocking webhook events
+type UnsignedPayload struct {
+	Payload   []byte
+	Secret    string
+	Timestamp time.Time
+	Scheme    string
+}
+
+type SignedPayload struct {
+	UnsignedPayload
+
+	Signature []byte
+	Header    string
+}
+
+// GenerateTestSignedPayload computes the Stripe-Signature header for a given
+// webhook body & secret. Useful for signing payloads in unit tests.
+func GenerateTestSignedPayload(options *UnsignedPayload) *SignedPayload {
+	signedPayload := &SignedPayload{UnsignedPayload: *options}
+
+	if signedPayload.Timestamp.IsZero() {
+		signedPayload.Timestamp = time.Now()
+	}
+
+	if signedPayload.Scheme == "" {
+		signedPayload.Scheme = "v1"
+	}
+
+	signedPayload.Signature = ComputeSignature(signedPayload.Timestamp, signedPayload.Payload, signedPayload.Secret)
+	signedPayload.Header = generateHeader(*signedPayload)
+
+	return signedPayload
+}
+
+func generateHeader(p SignedPayload) string {
+	return fmt.Sprintf("t=%d,%s=%s", p.Timestamp.Unix(), p.Scheme, hex.EncodeToString(p.Signature))
+}

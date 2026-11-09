@@ -1,11 +1,15 @@
+//
+//
+// File generated from our OpenAPI spec
+//
+//
+
 package stripe
 
-import "encoding/json"
-
-// SigmaScheduledQueryRunStatus is the possible values for status for a scheduled query run.
+// The query's execution status, which will be `completed` for successful runs, and `canceled`, `failed`, or `timed_out` otherwise.
 type SigmaScheduledQueryRunStatus string
 
-// List of values that SigmaScheduledQueryRunStatus can take.
+// List of values that SigmaScheduledQueryRunStatus can take
 const (
 	SigmaScheduledQueryRunStatusCanceled  SigmaScheduledQueryRunStatus = "canceled"
 	SigmaScheduledQueryRunStatusCompleted SigmaScheduledQueryRunStatus = "completed"
@@ -13,55 +17,79 @@ const (
 	SigmaScheduledQueryRunStatusTimedOut  SigmaScheduledQueryRunStatus = "timed_out"
 )
 
-// SigmaScheduledQueryRunParams is the set of parameters that can be used when updating a scheduled query run.
-type SigmaScheduledQueryRunParams struct {
-	Params `form:"*"`
-}
-
-// SigmaScheduledQueryRunListParams is the set of parameters that can be used when listing scheduled query runs.
+// Returns a list of scheduled query runs.
 type SigmaScheduledQueryRunListParams struct {
 	ListParams `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
 }
 
-// SigmaScheduledQueryRun is the resource representing a scheduled query run.
+// AddExpand appends a new field to expand.
+func (p *SigmaScheduledQueryRunListParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Retrieves the details of a scheduled query run.
+type SigmaScheduledQueryRunParams struct {
+	Params `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *SigmaScheduledQueryRunParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+// Retrieves the details of a scheduled query run.
+type SigmaScheduledQueryRunRetrieveParams struct {
+	Params `form:"*"`
+	// Specifies which fields in the response should be expanded.
+	Expand []*string `form:"expand" json:"expand,omitempty"`
+}
+
+// AddExpand appends a new field to expand.
+func (p *SigmaScheduledQueryRunRetrieveParams) AddExpand(f string) {
+	p.Expand = append(p.Expand, &f)
+}
+
+type SigmaScheduledQueryRunError struct {
+	// Information about the run failure.
+	Message string `json:"message"`
+}
+
+// If you have [scheduled a Sigma query](https://docs.stripe.com/sigma/scheduled-queries), you'll
+// receive a `sigma.scheduled_query_run.created` webhook each time the query
+// runs. The webhook contains a `ScheduledQueryRun` object, which you can use to
+// retrieve the query results.
 type SigmaScheduledQueryRun struct {
 	APIResource
-	Created              int64                        `json:"created"`
-	DataLoadTime         int64                        `json:"data_load_time"`
-	Error                string                       `json:"error"`
-	File                 *File                        `json:"file"`
-	ID                   string                       `json:"id"`
-	Livemode             bool                         `json:"livemode"`
-	Object               string                       `json:"object"`
-	ResultAvailableUntil int64                        `json:"result_available_until"`
-	SQL                  string                       `json:"sql"`
-	Status               SigmaScheduledQueryRunStatus `json:"status"`
-	Query                string                       `json:"query"`
-	Title                string                       `json:"title"`
+	// Time at which the object was created. Measured in seconds since the Unix epoch.
+	Created int64 `json:"created"`
+	// When the query was run, Sigma contained a snapshot of your Stripe data at this time.
+	DataLoadTime int64                        `json:"data_load_time"`
+	Error        *SigmaScheduledQueryRunError `json:"error,omitempty"`
+	// The file object representing the results of the query.
+	File *File `json:"file"`
+	// Unique identifier for the object.
+	ID string `json:"id"`
+	// If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+	Livemode bool `json:"livemode"`
+	// String representing the object's type. Objects of the same type share the same value.
+	Object string `json:"object"`
+	// Time at which the result expires and is no longer available for download.
+	ResultAvailableUntil int64 `json:"result_available_until"`
+	// SQL for the query.
+	SQL string `json:"sql"`
+	// The query's execution status, which will be `completed` for successful runs, and `canceled`, `failed`, or `timed_out` otherwise.
+	Status SigmaScheduledQueryRunStatus `json:"status"`
+	// Title of the query.
+	Title string `json:"title"`
 }
 
-// SigmaScheduledQueryRunList is a list of scheduled query runs as retrieved from a list endpoint.
+// SigmaScheduledQueryRunList is a list of ScheduledQueryRuns as retrieved from a list endpoint.
 type SigmaScheduledQueryRunList struct {
 	APIResource
 	ListMeta
 	Data []*SigmaScheduledQueryRun `json:"data"`
-}
-
-// UnmarshalJSON handles deserialization of an SigmaScheduledQueryRun.
-// This custom unmarshaling is needed because the resulting
-// property may be an id or the full struct if it was expanded.
-func (i *SigmaScheduledQueryRun) UnmarshalJSON(data []byte) error {
-	if id, ok := ParseID(data); ok {
-		i.ID = id
-		return nil
-	}
-
-	type sigmaScheduledQueryRun SigmaScheduledQueryRun
-	var v sigmaScheduledQueryRun
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-	*i = SigmaScheduledQueryRun(v)
-	return nil
 }
